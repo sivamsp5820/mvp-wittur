@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronDown, Search, Download, Upload, MoreHorizontal, Filter, Info, Loader2, GripVertical, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -29,16 +29,20 @@ interface PriceVersion {
 const COLUMNS = [
   "S.No",
   "Item Code",
-  "Opening",
-  "Height",
-  "Door",
-  "Fire",
+  "Product",
+  "Type",
+  "Clear Opening",
+  "Clear Height",
+  "Door type",
+  "Fire rated code",
   "Panel Type",
-  "Frame",
+  "Frame Size",
   "Finish",
   "Grade",
   "Price"
 ];
+
+const PINNED_COLUMNS = ["S.No", "Item Code", "Price"];
 
 export const PriceList: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0]);
@@ -51,6 +55,8 @@ export const PriceList: React.FC = () => {
   const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(PINNED_COLUMNS);
+  const [isColumnPickerOpen, setIsColumnPickerOpen] = useState(false);
 
   /**
    * HOW TO MAP AN API CALL TO THIS TABLE:
@@ -110,32 +116,51 @@ export const PriceList: React.FC = () => {
 
         const mockItems: PriceItem[] = mockData.map(({ price, ...item }) => item);
 
-        // Generate mock versions
-        const v1Date = new Date(2026, 2, 14);
-        const v2Date = new Date(2026, 2, 25);
-        const v3Date = new Date(2026, 3, 1);
-        const v4Date = new Date(2026, 3, 20);
-
         const mockVersions: PriceVersion[] = [
           {
             id: 'v1',
-            date: v1Date,
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.95 }), {})
+            date: new Date(2026, 0, 10),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.92 }), {})
           },
           {
             id: 'v2',
-            date: v2Date,
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.98 }), {})
+            date: new Date(2026, 2, 14),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.95 }), {})
           },
           {
             id: 'v3',
-            date: v3Date,
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price }), {})
+            date: new Date(2026, 2, 25),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.98 }), {})
           },
           {
             id: 'v4',
-            date: v4Date,
+            date: new Date(2026, 3, 1),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price }), {})
+          },
+          {
+            id: 'v5',
+            date: new Date(2026, 3, 20),
             prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 1.05 }), {})
+          },
+          {
+            id: 'v2025-1',
+            date: new Date(2025, 11, 15),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.88 }), {})
+          },
+          {
+            id: 'v2025-2',
+            date: new Date(2025, 10, 22),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.85 }), {})
+          },
+          {
+            id: 'v2025-3',
+            date: new Date(2025, 9, 5),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.82 }), {})
+          },
+          {
+            id: 'v2024-1',
+            date: new Date(2024, 11, 1),
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.75 }), {})
           }
         ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -160,14 +185,16 @@ export const PriceList: React.FC = () => {
 
   const selectedVersion = versions.find(v => v.id === selectedVersionId);
 
-  const groupedVersions = versions.reduce((acc, v) => {
-    const year = v.date.getFullYear();
-    const month = v.date.toLocaleString('default', { month: 'long' });
-    if (!acc[year]) acc[year] = {};
-    if (!acc[year][month]) acc[year][month] = [];
-    acc[year][month].push(v);
-    return acc;
-  }, {} as Record<number, Record<string, PriceVersion[]>>);
+  const groupedVersions = useMemo(() => {
+    return versions.reduce((acc, v) => {
+      const year = v.date.getFullYear();
+      const month = v.date.toLocaleString('default', { month: 'long' });
+      if (!acc[year]) acc[year] = {};
+      if (!acc[year][month]) acc[year][month] = [];
+      acc[year][month].push(v);
+      return acc;
+    }, {} as Record<number, Record<string, PriceVersion[]>>);
+  }, [versions]);
 
   const toggleYear = (year: number) => {
     setExpandedYears(prev => prev.includes(year) ? prev.filter(y => y !== year) : [...prev, year]);
@@ -298,6 +325,77 @@ export const PriceList: React.FC = () => {
                 </button>
               </div>
             )}
+            <div className="relative">
+              <button
+                onClick={() => setIsColumnPickerOpen(!isColumnPickerOpen)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 bg-white border rounded-lg text-xs font-bold transition-all active:scale-95",
+                  isColumnPickerOpen ? "border-slate-900 text-slate-900 shadow-sm" : "border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300"
+                )}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+                Columns
+              </button>
+
+              <AnimatePresence>
+                {isColumnPickerOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setIsColumnPickerOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-2xl z-40 p-2 overflow-hidden"
+                    >
+                      <div className="px-3 py-2 border-b border-slate-50 mb-1 flex items-center justify-between">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Toggle Columns</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setVisibleColumns(COLUMNS)}
+                            className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded transition-colors"
+                          >
+                            Select All
+                          </button>
+                          <button
+                            onClick={() => setVisibleColumns(PINNED_COLUMNS)}
+                            className="text-[9px] font-bold text-slate-500 hover:text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded transition-colors"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        {COLUMNS.filter(col => !PINNED_COLUMNS.includes(col)).map(col => {
+                          const isVisible = visibleColumns.includes(col);
+                          return (
+                            <button
+                              key={col}
+                              onClick={() => {
+                                setVisibleColumns(prev =>
+                                  isVisible ? prev.filter(c => c !== col) : [...prev, col]
+                                );
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
+                                isVisible ? "bg-slate-50 text-slate-900" : "text-slate-500 hover:bg-slate-50/50"
+                              )}
+                            >
+                              {col}
+                              <div className={cn(
+                                "w-3.5 h-3.5 rounded border transition-all flex items-center justify-center",
+                                isVisible ? "bg-slate-900 border-slate-900" : "border-slate-300"
+                              )}>
+                                {isVisible && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
             <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all">
               <Download className="w-4 h-4" />
             </button>
@@ -327,7 +425,7 @@ export const PriceList: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100">
-                  {COLUMNS.map((col, idx) => (
+                  {COLUMNS.filter(col => visibleColumns.includes(col)).map((col, idx) => (
                     <th
                       key={idx}
                       className={cn(
@@ -349,10 +447,10 @@ export const PriceList: React.FC = () => {
                           >
                             <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-slate-100/50 transition-colors">
                               <div className="flex items-center gap-2">
-                                <GripVertical className="w-3 h-3 text-slate-300" />
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Version History</p>
+                                <GripVertical className="w-3 h-3 text-slate-400" />
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Version History</p>
                               </div>
-                              <span className="text-[9px] font-bold text-slate-300 bg-white px-1.5 py-0.5 rounded border border-slate-100 italic">Draggable</span>
+                              <span className="text-[9px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm italic">Draggable</span>
                             </div>
                             <div className="max-h-[400px] overflow-y-auto p-2 space-y-1">
                               {Object.entries(groupedVersions).sort(([y1], [y2]) => Number(y2) - Number(y1)).map(([year, months]) => {
@@ -361,13 +459,13 @@ export const PriceList: React.FC = () => {
                                   <div key={year} className="bg-slate-50/30 rounded-lg overflow-hidden border border-transparent hover:border-slate-100 transition-all">
                                     <button
                                       onClick={() => toggleYear(Number(year))}
-                                      className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-800 hover:text-slate-950 transition-colors"
                                     >
                                       <span className="flex items-center gap-2">
-                                        <ChevronRight className={cn("w-3 h-3 transition-transform", isYearExpanded && "rotate-90")} />
+                                        <ChevronRight className={cn("w-3 h-3 text-slate-400 transition-transform", isYearExpanded && "rotate-90")} />
                                         {year}
                                       </span>
-                                      <span className="text-[9px] text-slate-300 font-medium">
+                                      <span className="text-[9px] text-slate-400 font-bold bg-white px-1 rounded border border-slate-100">
                                         {Object.values(months).flat().length} Versions
                                       </span>
                                     </button>
@@ -388,10 +486,10 @@ export const PriceList: React.FC = () => {
                                                 <div key={month} className="rounded-lg overflow-hidden border border-slate-50">
                                                   <button
                                                     onClick={() => toggleMonth(monthKey)}
-                                                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-tighter hover:text-slate-600 hover:bg-slate-50/50 transition-colors"
+                                                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-slate-800 hover:bg-slate-50/50 transition-colors"
                                                   >
                                                     <span className="flex items-center gap-1.5">
-                                                      <ChevronRight className={cn("w-2.5 h-2.5 transition-transform", isMonthExpanded && "rotate-90")} />
+                                                      <ChevronRight className={cn("w-2.5 h-2.5 text-slate-400 transition-transform", isMonthExpanded && "rotate-90")} />
                                                       {month}
                                                     </span>
                                                   </button>
@@ -413,7 +511,7 @@ export const PriceList: React.FC = () => {
                                                                 "w-full text-left px-3 py-2 rounded-lg text-xs transition-all relative group",
                                                                 selectedVersionId === v.id
                                                                   ? "bg-slate-900 text-white font-bold shadow-md shadow-slate-200"
-                                                                  : "text-slate-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100"
+                                                                  : "text-slate-800 font-medium hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100"
                                                               )}
                                                             >
                                                               <div className="flex items-center justify-between">
@@ -451,32 +549,44 @@ export const PriceList: React.FC = () => {
               <tbody className="divide-y divide-slate-100">
                 {filteredData.map((item) => (
                   <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-3 text-sm font-medium text-slate-400">{item.id}</td>
-                    <td className="px-6 py-3">
-                      <span className="text-sm font-bold text-slate-900 font-mono tracking-tight group-hover:text-blue-600 transition-colors">{item.code}</span>
-                    </td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{item.opening}</td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{item.height}</td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{item.doorType}</td>
-                    <td className="px-6 py-3">
-                      <span className="text-xs font-bold text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
-                        {item.fireRating}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{item.panelType}</td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{item.frameSize}</td>
-                    <td className="px-6 py-3 text-sm text-slate-500">{item.finish}</td>
-                    <td className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">{item.grade}</td>
-                    <td className="px-6 py-3 text-right">
-                      <span className="text-base font-bold text-slate-900">
-                        ₹{((selectedVersion?.prices[item.id] || 0)).toLocaleString('en-IN')}
-                      </span>
-                      {selectedVersion && (
-                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
-                          as of {selectedVersion.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                        </p>
-                      )}
-                    </td>
+                    {visibleColumns.includes("S.No") && <td className="px-6 py-3 text-sm font-medium text-slate-400">{item.id}</td>}
+                    {visibleColumns.includes("Item Code") && (
+                      <td className="px-6 py-3">
+                        <span className="text-sm font-bold text-slate-900 font-mono tracking-tight group-hover:text-blue-600 transition-colors">{item.code}</span>
+                      </td>
+                    )}
+                    {visibleColumns.includes("Product") && <td className="px-6 py-3 text-sm text-slate-500">{item.product}</td>}
+                    {visibleColumns.includes("Type") && <td className="px-6 py-3 text-sm text-slate-500">{item.type}</td>}
+                    {visibleColumns.includes("Clear Opening") && <td className="px-6 py-3 text-sm text-slate-500">{item.opening}</td>}
+                    {visibleColumns.includes("Clear Height") && <td className="px-6 py-3 text-sm text-slate-500">{item.height}</td>}
+                    {visibleColumns.includes("Door type") && <td className="px-6 py-3 text-sm text-slate-500">{item.doorType}</td>}
+                    {visibleColumns.includes("Fire rated code") && (
+                      <td className="px-6 py-3">
+                        <span className="text-xs font-bold text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
+                          {item.fireRating}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.includes("Panel Type") && <td className="px-6 py-3 text-sm text-slate-500">{item.panelType}</td>}
+                    {visibleColumns.includes("Frame Size") && <td className="px-6 py-3 text-sm text-slate-500">{item.frameSize}</td>}
+                    {visibleColumns.includes("Finish") && <td className="px-6 py-3 text-sm text-slate-500">{item.finish}</td>}
+                    {visibleColumns.includes("Grade") && <td className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">{item.grade}</td>}
+                    {visibleColumns.includes("Price") && (
+                      <td className="px-6 py-3 text-right">
+                        <span className="text-base font-bold text-slate-900">
+                          ₹{((selectedVersion?.prices[item.id] || 0)).toLocaleString('en-IN')}
+                        </span>
+                        {selectedVersion && (
+                          <p className="inline-block text-[11px] text-blue-700 font-bold mt-1 px-1.5 py-0.5 bg-blue-50/70 rounded-md border border-blue-100/50">
+                            as of {selectedVersion.date.toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: selectedVersion.date.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
+                            })}
+                          </p>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
