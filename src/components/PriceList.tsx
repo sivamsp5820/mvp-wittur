@@ -350,12 +350,18 @@ export const PriceList: React.FC = () => {
                       <div className="px-3 py-2 border-b border-slate-50 mb-1 flex items-center justify-between">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Toggle Columns</p>
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => setVisibleColumns(COLUMNS)}
-                            className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded transition-colors"
-                          >
-                            Select All
-                          </button>
+                          {(() => {
+                            const optionalCols = COLUMNS.filter(col => !PINNED_COLUMNS.includes(col));
+                            const allSelected = optionalCols.every(col => visibleColumns.includes(col));
+                            return (
+                              <button
+                                onClick={() => setVisibleColumns(allSelected ? PINNED_COLUMNS : COLUMNS)}
+                                className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded transition-colors"
+                              >
+                                {allSelected ? 'Unselect All' : 'Select All'}
+                              </button>
+                            );
+                          })()}
                           <button
                             onClick={() => setVisibleColumns(PINNED_COLUMNS)}
                             className="text-[9px] font-bold text-slate-500 hover:text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded transition-colors"
@@ -424,169 +430,200 @@ export const PriceList: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100">
-                  {COLUMNS.filter(col => visibleColumns.includes(col)).map((col, idx) => (
-                    <th
-                      key={idx}
-                      className={cn(
-                        "px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap",
-                        col === 'Price' ? "text-right" : ""
-                      )}
-                    >
-                      {col === 'Price' ? (
-                        <div className="relative group/price">
-                          <button className="flex items-center gap-1.5 hover:text-slate-600 transition-colors">
-                            Price
-                            <ChevronDown className="w-3 h-3" />
-                          </button>
-                          <motion.div
-                            drag
-                            dragMomentum={false}
-                            className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl opacity-0 invisible group-hover/price:opacity-100 group-hover/price:visible transition-all z-20 overflow-hidden cursor-default"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-slate-100/50 transition-colors">
-                              <div className="flex items-center gap-2">
-                                <GripVertical className="w-3 h-3 text-slate-400" />
-                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Version History</p>
-                              </div>
-                              <span className="text-[9px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm italic">Draggable</span>
-                            </div>
-                            <div className="max-h-[400px] overflow-y-auto p-2 space-y-1">
-                              {Object.entries(groupedVersions).sort(([y1], [y2]) => Number(y2) - Number(y1)).map(([year, months]) => {
-                                const isYearExpanded = expandedYears.includes(Number(year));
-                                return (
-                                  <div key={year} className="bg-slate-50/30 rounded-lg overflow-hidden border border-transparent hover:border-slate-100 transition-all">
-                                    <button
-                                      onClick={() => toggleYear(Number(year))}
-                                      className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-800 hover:text-slate-950 transition-colors"
-                                    >
-                                      <span className="flex items-center gap-2">
-                                        <ChevronRight className={cn("w-3 h-3 text-slate-400 transition-transform", isYearExpanded && "rotate-90")} />
-                                        {year}
-                                      </span>
-                                      <span className="text-[9px] text-slate-400 font-bold bg-white px-1 rounded border border-slate-100">
-                                        {Object.values(months).flat().length} Versions
-                                      </span>
-                                    </button>
-
-                                    <AnimatePresence>
-                                      {isYearExpanded && (
-                                        <motion.div
-                                          initial={{ height: 0 }}
-                                          animate={{ height: "auto" }}
-                                          exit={{ height: 0 }}
-                                          className="overflow-hidden bg-white/50"
-                                        >
-                                          <div className="px-1 pb-1 space-y-0.5">
-                                            {Object.entries(months).map(([month, MonthVersions]) => {
-                                              const monthKey = `${year}-${month}`;
-                                              const isMonthExpanded = expandedMonths.includes(monthKey);
-                                              return (
-                                                <div key={month} className="rounded-lg overflow-hidden border border-slate-50">
-                                                  <button
-                                                    onClick={() => toggleMonth(monthKey)}
-                                                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-slate-800 hover:bg-slate-50/50 transition-colors"
-                                                  >
-                                                    <span className="flex items-center gap-1.5">
-                                                      <ChevronRight className={cn("w-2.5 h-2.5 text-slate-400 transition-transform", isMonthExpanded && "rotate-90")} />
-                                                      {month}
-                                                    </span>
-                                                  </button>
-
-                                                  <AnimatePresence>
-                                                    {isMonthExpanded && (
-                                                      <motion.div
-                                                        initial={{ height: 0 }}
-                                                        animate={{ height: "auto" }}
-                                                        exit={{ height: 0 }}
-                                                        className="overflow-hidden"
-                                                      >
-                                                        <div className="p-1 space-y-1">
-                                                          {MonthVersions.map((v) => (
-                                                            <button
-                                                              key={v.id}
-                                                              onClick={() => setSelectedVersionId(v.id)}
-                                                              className={cn(
-                                                                "w-full text-left px-3 py-2 rounded-lg text-xs transition-all relative group",
-                                                                selectedVersionId === v.id
-                                                                  ? "bg-slate-900 text-white font-bold shadow-md shadow-slate-200"
-                                                                  : "text-slate-800 font-medium hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100"
-                                                              )}
-                                                            >
-                                                              <div className="flex items-center justify-between">
-                                                                <span>{v.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                                                                {selectedVersionId === v.id && (
-                                                                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                                                                )}
-                                                              </div>
-                                                            </button>
-                                                          ))}
-                                                        </div>
-                                                      </motion.div>
-                                                    )}
-                                                  </AnimatePresence>
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </motion.div>
-                                      )}
-                                    </AnimatePresence>
+                <tr className="border-b border-slate-100 h-10">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {COLUMNS.map((col) => {
+                      if (!visibleColumns.includes(col)) return null;
+                      return (
+                        <motion.th
+                          key={col}
+                          initial={{ opacity: 0, width: 0 }}
+                          animate={{ opacity: 1, width: 'auto' }}
+                          exit={{ opacity: 0, width: 0 }}
+                          transition={{ duration: 0.2, ease: "easeInOut" }}
+                          className={cn(
+                            "px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap overflow-hidden",
+                            col === 'Price' ? "text-right" : ""
+                          )}
+                        >
+                          {col === 'Price' ? (
+                            <div className="relative group/price inline-block text-right">
+                              <button className="flex items-center gap-1.5 hover:text-slate-600 transition-colors ml-auto">
+                                Price
+                                <ChevronDown className="w-3 h-3" />
+                              </button>
+                              <motion.div
+                                drag
+                                dragMomentum={false}
+                                className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl opacity-0 invisible group-hover/price:opacity-100 group-hover/price:visible transition-all z-20 overflow-hidden cursor-default"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-slate-100/50 transition-colors">
+                                  <div className="flex items-center gap-2">
+                                    <GripVertical className="w-3 h-3 text-slate-400" />
+                                    <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Version History</p>
                                   </div>
-                                );
-                              })}
+                                  <span className="text-[9px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm italic">Draggable</span>
+                                </div>
+                                <div className="max-h-[400px] overflow-y-auto p-2 space-y-1">
+                                  {Object.entries(groupedVersions).sort(([y1], [y2]) => Number(y2) - Number(y1)).map(([year, months]) => {
+                                    const isYearExpanded = expandedYears.includes(Number(year));
+                                    return (
+                                      <div key={year} className="bg-slate-50/30 rounded-lg overflow-hidden border border-transparent hover:border-slate-100 transition-all">
+                                        <button
+                                          onClick={() => toggleYear(Number(year))}
+                                          className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-800 hover:text-slate-950 transition-colors"
+                                        >
+                                          <span className="flex items-center gap-2">
+                                            <ChevronRight className={cn("w-3 h-3 text-slate-400 transition-transform", isYearExpanded && "rotate-90")} />
+                                            {year}
+                                          </span>
+                                          <span className="text-[9px] text-slate-400 font-bold bg-white px-1 rounded border border-slate-100">
+                                            {Object.values(months).flat().length} Versions
+                                          </span>
+                                        </button>
+
+                                        <AnimatePresence>
+                                          {isYearExpanded && (
+                                            <motion.div
+                                              initial={{ height: 0 }}
+                                              animate={{ height: "auto" }}
+                                              exit={{ height: 0 }}
+                                              className="overflow-hidden bg-white/50"
+                                            >
+                                              <div className="px-1 pb-1 space-y-0.5">
+                                                {Object.entries(months).map(([month, MonthVersions]) => {
+                                                  const monthKey = `${year}-${month}`;
+                                                  const isMonthExpanded = expandedMonths.includes(monthKey);
+                                                  return (
+                                                    <div key={month} className="rounded-lg overflow-hidden border border-slate-50">
+                                                      <button
+                                                        onClick={() => toggleMonth(monthKey)}
+                                                        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-slate-800 hover:bg-slate-50/50 transition-colors"
+                                                      >
+                                                        <span className="flex items-center gap-1.5">
+                                                          <ChevronRight className={cn("w-2.5 h-2.5 text-slate-400 transition-transform", isMonthExpanded && "rotate-90")} />
+                                                          {month}
+                                                        </span>
+                                                      </button>
+
+                                                      <AnimatePresence>
+                                                        {isMonthExpanded && (
+                                                          <motion.div
+                                                            initial={{ height: 0 }}
+                                                            animate={{ height: "auto" }}
+                                                            exit={{ height: 0 }}
+                                                            className="overflow-hidden"
+                                                          >
+                                                            <div className="p-1 space-y-1">
+                                                              {MonthVersions.map((v) => (
+                                                                <button
+                                                                  key={v.id}
+                                                                  onClick={() => setSelectedVersionId(v.id)}
+                                                                  className={cn(
+                                                                    "w-full text-left px-3 py-2 rounded-lg text-xs transition-all relative group",
+                                                                    selectedVersionId === v.id
+                                                                      ? "bg-slate-900 text-white font-bold shadow-md shadow-slate-200"
+                                                                      : "text-slate-800 font-medium hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100"
+                                                                  )}
+                                                                >
+                                                                  <div className="flex items-center justify-between">
+                                                                    <span>{v.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                                    {selectedVersionId === v.id && (
+                                                                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                                                    )}
+                                                                  </div>
+                                                                </button>
+                                                              ))}
+                                                            </div>
+                                                          </motion.div>
+                                                        )}
+                                                      </AnimatePresence>
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </motion.div>
+                                          )}
+                                        </AnimatePresence>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
                             </div>
-                          </motion.div>
-                        </div>
-                      ) : (
-                        col
-                      )}
-                    </th>
-                  ))}
+                          ) : (
+                            col
+                          )}
+                        </motion.th>
+                      );
+                    })}
+                  </AnimatePresence>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredData.map((item) => (
-                  <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                    {visibleColumns.includes("S.No") && <td className="px-6 py-3 text-sm font-medium text-slate-400">{item.id}</td>}
-                    {visibleColumns.includes("Item Code") && (
-                      <td className="px-6 py-3">
-                        <span className="text-sm font-bold text-slate-900 font-mono tracking-tight group-hover:text-blue-600 transition-colors">{item.code}</span>
-                      </td>
-                    )}
-                    {visibleColumns.includes("Product") && <td className="px-6 py-3 text-sm text-slate-500">{item.product}</td>}
-                    {visibleColumns.includes("Type") && <td className="px-6 py-3 text-sm text-slate-500">{item.type}</td>}
-                    {visibleColumns.includes("Clear Opening") && <td className="px-6 py-3 text-sm text-slate-500">{item.opening}</td>}
-                    {visibleColumns.includes("Clear Height") && <td className="px-6 py-3 text-sm text-slate-500">{item.height}</td>}
-                    {visibleColumns.includes("Door type") && <td className="px-6 py-3 text-sm text-slate-500">{item.doorType}</td>}
-                    {visibleColumns.includes("Fire rated code") && (
-                      <td className="px-6 py-3">
-                        <span className="text-xs font-bold text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
-                          {item.fireRating}
-                        </span>
-                      </td>
-                    )}
-                    {visibleColumns.includes("Panel Type") && <td className="px-6 py-3 text-sm text-slate-500">{item.panelType}</td>}
-                    {visibleColumns.includes("Frame Size") && <td className="px-6 py-3 text-sm text-slate-500">{item.frameSize}</td>}
-                    {visibleColumns.includes("Finish") && <td className="px-6 py-3 text-sm text-slate-500">{item.finish}</td>}
-                    {visibleColumns.includes("Grade") && <td className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">{item.grade}</td>}
-                    {visibleColumns.includes("Price") && (
-                      <td className="px-6 py-3 text-right">
-                        <span className="text-base font-bold text-slate-900">
-                          ₹{((selectedVersion?.prices[item.id] || 0)).toLocaleString('en-IN')}
-                        </span>
-                        {selectedVersion && (
-                          <p className="inline-block text-[11px] text-blue-700 font-bold mt-1 px-1.5 py-0.5 bg-blue-50/70 rounded-md border border-blue-100/50">
-                            as of {selectedVersion.date.toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: selectedVersion.date.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
-                            })}
-                          </p>
-                        )}
-                      </td>
-                    )}
+                  <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors h-14">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {COLUMNS.map((col) => {
+                        if (!visibleColumns.includes(col)) return null;
+                        return (
+                          <motion.td
+                            key={`${item.id}-${col}`}
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: 'auto' }}
+                            exit={{ opacity: 0, width: 0 }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            className={cn(
+                              "px-6 py-3 whitespace-nowrap overflow-hidden",
+                              col === 'Price' ? "text-right" : ""
+                            )}
+                          >
+                            {(() => {
+                              switch (col) {
+                                case 'S.No': return <span className="text-sm font-medium text-slate-400">{item.id}</span>;
+                                case 'Item Code': return (
+                                  <span className="text-sm font-bold text-slate-900 font-mono tracking-tight group-hover:text-blue-600 transition-colors">
+                                    {item.code}
+                                  </span>
+                                );
+                                case 'Product': return <span className="text-sm text-slate-500">{item.product}</span>;
+                                case 'Type': return <span className="text-sm text-slate-500">{item.type}</span>;
+                                case 'Clear Opening': return <span className="text-sm text-slate-500">{item.opening}</span>;
+                                case 'Clear Height': return <span className="text-sm text-slate-500">{item.height}</span>;
+                                case 'Door type': return <span className="text-sm text-slate-500">{item.doorType}</span>;
+                                case 'Fire rated code': return (
+                                  <span className="text-xs font-bold text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
+                                    {item.fireRating}
+                                  </span>
+                                );
+                                case 'Panel Type': return <span className="text-sm text-slate-500">{item.panelType}</span>;
+                                case 'Frame Size': return <span className="text-sm text-slate-500">{item.frameSize}</span>;
+                                case 'Finish': return <span className="text-sm text-slate-500">{item.finish}</span>;
+                                case 'Grade': return <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">{item.grade}</span>;
+                                case 'Price': return (
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-base font-bold text-slate-900">
+                                      ₹{((selectedVersion?.prices[item.id] || 0)).toLocaleString('en-IN')}
+                                    </span>
+                                    {selectedVersion && (
+                                      <p className="inline-block text-[10px] text-blue-700 font-bold mt-1 px-1.5 py-0.5 bg-blue-50/70 rounded-md border border-blue-100/50">
+                                        as of {selectedVersion.date.toLocaleDateString('en-GB', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          year: selectedVersion.date.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
+                                        })}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                                default: return null;
+                              }
+                            })()}
+                          </motion.td>
+                        );
+                      })}
+                    </AnimatePresence>
                   </tr>
                 ))}
               </tbody>
