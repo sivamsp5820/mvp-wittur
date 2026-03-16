@@ -11,26 +11,26 @@ export const ResultsSection: React.FC = () => {
             Comparison results between <span className="font-mono text-slate-700">S00014756CORE_CD</span> and <span className="font-mono text-slate-700">S00014658CORE_CD</span>
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
             <Filter className="w-4 h-4 text-slate-400" />
             1 selected
             <ChevronDown className="w-4 h-4 text-slate-400" />
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
             Group Based Cost
             <ChevronDown className="w-4 h-4 text-slate-400" />
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-8">
           <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
             Sum of DERIVED MATERIAL GROSS COST Landed cost [INR]
           </h3>
-          <button className="flex items-center gap-2 px-6 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors shadow-sm">
+          <button className="flex items-center gap-2 px-6 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-hover transition-colors shadow-sm">
             <Download className="w-4 h-4" />
             Export
           </button>

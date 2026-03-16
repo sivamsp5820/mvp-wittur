@@ -36,19 +36,19 @@ export const FileUploadCard: React.FC<FileUploadCardProps> = ({ title, subtitle,
   } as any);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col h-full">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 flex flex-col h-full">
       <h3 className="text-lg font-semibold text-slate-800 mb-4">{title}</h3>
-      
-      <div 
-        {...getRootProps()} 
+
+      <div
+        {...getRootProps()}
         className={cn(
-          "flex-1 border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-8 transition-colors cursor-pointer",
+          "flex-1 border-2 border-dashed rounded-md flex flex-col items-center justify-center p-8 transition-colors cursor-pointer",
           isDragActive ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/50 hover:bg-slate-50",
           file ? "border-primary/30 bg-primary/5" : ""
         )}
       >
         <input {...getInputProps()} />
-        
+
         {file ? (
           <div className="flex flex-col items-center text-center">
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
@@ -56,7 +56,7 @@ export const FileUploadCard: React.FC<FileUploadCardProps> = ({ title, subtitle,
             </div>
             <p className="text-sm font-medium text-slate-700 max-w-[200px] truncate">{file.name}</p>
             <p className="text-xs text-slate-500 mt-1">{(file.size / 1024).toFixed(1)} KB</p>
-            <button 
+            <button
               onClick={removeFile}
               className="mt-4 text-xs font-medium text-red-500 hover:text-red-600 flex items-center gap-1"
             >
@@ -67,13 +67,13 @@ export const FileUploadCard: React.FC<FileUploadCardProps> = ({ title, subtitle,
           <div className="flex flex-col items-center text-center">
             <UploadCloud className="w-12 h-12 text-slate-400 mb-4" />
             <p className="text-sm font-medium text-slate-600">Select or Drag & Drop file here</p>
-            <button className="mt-4 px-6 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors">
+            <button className="mt-4 px-6 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-hover transition-colors">
               Choose File
             </button>
           </div>
         )}
       </div>
-      
+
       {subtitle && (
         <p className="mt-4 text-xs text-slate-400 font-mono uppercase tracking-wider">
           {subtitle}

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, Search, Download, Upload, MoreHorizontal, Filter, Info, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronDown, Search, Download, Upload, MoreHorizontal, Filter, Info, Loader2, GripVertical, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 
 const CUSTOMERS = ['Independent', 'Otis', 'Kone', 'TKEI', 'Mitsubishi', 'Schindler'];
@@ -17,19 +18,22 @@ interface PriceItem {
   frameSize: string;
   finish: string;
   grade: string;
-  price: number;
+}
+
+interface PriceVersion {
+  id: string;
+  date: Date;
+  prices: Record<number, number>; // PriceItem id -> price
 }
 
 const COLUMNS = [
   "S.No",
   "Item Code",
-  "Product",
-  "Type",
   "Opening",
   "Height",
   "Door",
   "Fire",
-  "Panel",
+  "Panel Type",
   "Frame",
   "Finish",
   "Grade",
@@ -40,6 +44,11 @@ export const PriceList: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<PriceItem[]>([]);
+  const [versions, setVersions] = useState<PriceVersion[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedYears, setExpandedYears] = useState<number[]>([]);
+  const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,13 +63,13 @@ export const PriceList: React.FC = () => {
     const fetchPricing = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // --- REAL API EXAMPLE ---
         // const response = await fetch(`https://your-api.com/prices?customer=${selectedCustomer}`);
         // if (!response.ok) throw new Error('Network response was not ok');
         // const result = await response.json();
-        
+
         // --- MAPPING LOGIC ---
         // If your API returns: { item_id: 1, sku: "ABC", ... }
         // You would map it like this:
@@ -74,8 +83,8 @@ export const PriceList: React.FC = () => {
 
         // --- SIMULATED API CALL ---
         await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate latency
-        
-        const mockData: PriceItem[] = [
+
+        const mockData = [
           { id: 1, code: "E.COM.700.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "700mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 18500 },
           { id: 2, code: "E.COM.800.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "800mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 19200 },
           { id: 3, code: "E.COM.900.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "900mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 21000 },
@@ -98,7 +107,41 @@ export const PriceList: React.FC = () => {
           { id: 20, code: "E.COM.1000.2100.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "1000mm", height: "2100mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "120mm", finish: "Powder Coated", grade: "Grade A", price: 23500 }
         ];
 
-        setData(mockData);
+
+        const mockItems: PriceItem[] = mockData.map(({ price, ...item }) => item);
+
+        // Generate mock versions
+        const v1Date = new Date(2026, 2, 14);
+        const v2Date = new Date(2026, 2, 25);
+        const v3Date = new Date(2026, 3, 1);
+        const v4Date = new Date(2026, 3, 20);
+
+        const mockVersions: PriceVersion[] = [
+          {
+            id: 'v1',
+            date: v1Date,
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.95 }), {})
+          },
+          {
+            id: 'v2',
+            date: v2Date,
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.98 }), {})
+          },
+          {
+            id: 'v3',
+            date: v3Date,
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price }), {})
+          },
+          {
+            id: 'v4',
+            date: v4Date,
+            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 1.05 }), {})
+          }
+        ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        setData(mockItems);
+        setVersions(mockVersions);
+        setSelectedVersionId(mockVersions[0].id);
       } catch (err) {
         setError('Failed to load pricing data. Please check your connection.');
         console.error(err);
@@ -110,20 +153,72 @@ export const PriceList: React.FC = () => {
     fetchPricing();
   }, [selectedCustomer]);
 
-  const filteredData = data.filter(item => 
+  const filteredData = data.filter(item =>
     item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.product.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const selectedVersion = versions.find(v => v.id === selectedVersionId);
+
+  const groupedVersions = versions.reduce((acc, v) => {
+    const year = v.date.getFullYear();
+    const month = v.date.toLocaleString('default', { month: 'long' });
+    if (!acc[year]) acc[year] = {};
+    if (!acc[year][month]) acc[year][month] = [];
+    acc[year][month].push(v);
+    return acc;
+  }, {} as Record<number, Record<string, PriceVersion[]>>);
+
+  const toggleYear = (year: number) => {
+    setExpandedYears(prev => prev.includes(year) ? prev.filter(y => y !== year) : [...prev, year]);
+  };
+
+  const toggleMonth = (monthKey: string) => {
+    setExpandedMonths(prev => prev.includes(monthKey) ? prev.filter(m => m !== monthKey) : [...prev, monthKey]);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Simulate file processing
+    const newDate = new Date();
+    const newPriceVersion: PriceVersion = {
+      id: `v-${Date.now()}`,
+      date: newDate,
+      prices: data.reduce((acc, item) => ({
+        ...acc,
+        [item.id]: (selectedVersion?.prices[item.id] || 0) * (1 + (Math.random() * 0.1 - 0.05))
+      }), {})
+    };
+
+    setVersions(prev => [newPriceVersion, ...prev]);
+    setSelectedVersionId(newPriceVersion.id);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Auto-expand latest on load
+  useEffect(() => {
+    if (versions.length > 0) {
+      const latest = versions[0];
+      setExpandedYears([latest.date.getFullYear()]);
+      setExpandedMonths([`${latest.date.getFullYear()}-${latest.date.toLocaleString('default', { month: 'long' })}`]);
+    }
+  }, [versions.length]);
+
   return (
-    <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-700">
+    <div className="max-w-full mx-auto space-y-8 animate-in fade-in duration-700">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
           <h2 className="text-2xl font-light text-slate-900 tracking-tight">Price Management</h2>
           <p className="text-sm text-slate-500 font-medium">Manage and view pricing for all major partners.</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Partner</span>
@@ -165,7 +260,7 @@ export const PriceList: React.FC = () => {
           { label: 'Last Sync', value: '14 Mar 2026', color: 'text-emerald-600' },
           { label: 'Status', value: isLoading ? 'Syncing' : 'Live', color: isLoading ? 'text-slate-400' : 'text-blue-600' }
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <div key={i} className="bg-white p-6 rounded-lg border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
             <p className={cn("text-xl font-light tracking-tight", stat.color)}>{stat.value}</p>
           </div>
@@ -173,7 +268,7 @@ export const PriceList: React.FC = () => {
       </div>
 
       {/* Table Container */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden min-h-[400px] relative">
+      <div className="bg-white rounded-xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden min-h-[400px] relative">
         <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
           <div className="flex items-center gap-3">
             <h3 className="text-sm font-semibold text-slate-800">{selectedCustomer} Catalog</h3>
@@ -183,18 +278,30 @@ export const PriceList: React.FC = () => {
               </span>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2">
             {selectedCustomer === 'Independent' && (
-              <button className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20">
-                <Upload className="w-3.5 h-3.5" />
-                Upload Data
-              </button>
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-900/20"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Upload Price List
+                </button>
+              </div>
             )}
-            <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all">
+            <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all">
               <Download className="w-4 h-4" />
             </button>
-            <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all">
+            <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600 hover:border-slate-300 transition-all">
               <Filter className="w-4 h-4" />
             </button>
           </div>
@@ -208,7 +315,7 @@ export const PriceList: React.FC = () => {
         ) : error ? (
           <div className="py-24 text-center">
             <p className="text-sm font-medium text-red-500">{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="mt-4 text-xs font-bold text-slate-900 underline underline-offset-4"
             >
@@ -219,56 +326,156 @@ export const PriceList: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-50">
+                <tr className="border-b border-slate-100">
                   {COLUMNS.map((col, idx) => (
-                    <th 
-                      key={idx} 
+                    <th
+                      key={idx}
                       className={cn(
-                        "px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap",
+                        "px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap",
                         col === 'Price' ? "text-right" : ""
                       )}
                     >
-                      {col}
+                      {col === 'Price' ? (
+                        <div className="relative group/price">
+                          <button className="flex items-center gap-1.5 hover:text-slate-600 transition-colors">
+                            Price
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                          <motion.div
+                            drag
+                            dragMomentum={false}
+                            className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl opacity-0 invisible group-hover/price:opacity-100 group-hover/price:visible transition-all z-20 overflow-hidden cursor-default"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-slate-100/50 transition-colors">
+                              <div className="flex items-center gap-2">
+                                <GripVertical className="w-3 h-3 text-slate-300" />
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Version History</p>
+                              </div>
+                              <span className="text-[9px] font-bold text-slate-300 bg-white px-1.5 py-0.5 rounded border border-slate-100 italic">Draggable</span>
+                            </div>
+                            <div className="max-h-[400px] overflow-y-auto p-2 space-y-1">
+                              {Object.entries(groupedVersions).sort(([y1], [y2]) => Number(y2) - Number(y1)).map(([year, months]) => {
+                                const isYearExpanded = expandedYears.includes(Number(year));
+                                return (
+                                  <div key={year} className="bg-slate-50/30 rounded-lg overflow-hidden border border-transparent hover:border-slate-100 transition-all">
+                                    <button
+                                      onClick={() => toggleYear(Number(year))}
+                                      className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <ChevronRight className={cn("w-3 h-3 transition-transform", isYearExpanded && "rotate-90")} />
+                                        {year}
+                                      </span>
+                                      <span className="text-[9px] text-slate-300 font-medium">
+                                        {Object.values(months).flat().length} Versions
+                                      </span>
+                                    </button>
+
+                                    <AnimatePresence>
+                                      {isYearExpanded && (
+                                        <motion.div
+                                          initial={{ height: 0 }}
+                                          animate={{ height: "auto" }}
+                                          exit={{ height: 0 }}
+                                          className="overflow-hidden bg-white/50"
+                                        >
+                                          <div className="px-1 pb-1 space-y-0.5">
+                                            {Object.entries(months).map(([month, MonthVersions]) => {
+                                              const monthKey = `${year}-${month}`;
+                                              const isMonthExpanded = expandedMonths.includes(monthKey);
+                                              return (
+                                                <div key={month} className="rounded-lg overflow-hidden border border-slate-50">
+                                                  <button
+                                                    onClick={() => toggleMonth(monthKey)}
+                                                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-tighter hover:text-slate-600 hover:bg-slate-50/50 transition-colors"
+                                                  >
+                                                    <span className="flex items-center gap-1.5">
+                                                      <ChevronRight className={cn("w-2.5 h-2.5 transition-transform", isMonthExpanded && "rotate-90")} />
+                                                      {month}
+                                                    </span>
+                                                  </button>
+
+                                                  <AnimatePresence>
+                                                    {isMonthExpanded && (
+                                                      <motion.div
+                                                        initial={{ height: 0 }}
+                                                        animate={{ height: "auto" }}
+                                                        exit={{ height: 0 }}
+                                                        className="overflow-hidden"
+                                                      >
+                                                        <div className="p-1 space-y-1">
+                                                          {MonthVersions.map((v) => (
+                                                            <button
+                                                              key={v.id}
+                                                              onClick={() => setSelectedVersionId(v.id)}
+                                                              className={cn(
+                                                                "w-full text-left px-3 py-2 rounded-lg text-xs transition-all relative group",
+                                                                selectedVersionId === v.id
+                                                                  ? "bg-slate-900 text-white font-bold shadow-md shadow-slate-200"
+                                                                  : "text-slate-600 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100"
+                                                              )}
+                                                            >
+                                                              <div className="flex items-center justify-between">
+                                                                <span>{v.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                                {selectedVersionId === v.id && (
+                                                                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                                                )}
+                                                              </div>
+                                                            </button>
+                                                          ))}
+                                                        </div>
+                                                      </motion.div>
+                                                    )}
+                                                  </AnimatePresence>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        </div>
+                      ) : (
+                        col
+                      )}
                     </th>
                   ))}
-                  <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {filteredData.map((item) => (
                   <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-5 text-sm font-medium text-slate-400">{item.id}</td>
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-3 text-sm font-medium text-slate-400">{item.id}</td>
+                    <td className="px-6 py-3">
                       <span className="text-sm font-bold text-slate-900 font-mono tracking-tight group-hover:text-blue-600 transition-colors">{item.code}</span>
                     </td>
-                    <td className="px-6 py-5 text-sm font-medium text-slate-600">{item.product}</td>
-                    <td className="px-6 py-5">
-                      <span className={cn(
-                        "text-xs font-bold px-2 py-0.5 rounded-full",
-                        item.type === 'Standard' ? "text-blue-500 bg-blue-50" : item.type === 'Premium' ? "text-amber-500 bg-amber-50" : "text-emerald-500 bg-emerald-50"
-                      )}>
-                        {item.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 text-sm text-slate-500">{item.opening}</td>
-                    <td className="px-6 py-5 text-sm text-slate-500">{item.height}</td>
-                    <td className="px-6 py-5 text-sm text-slate-500">{item.doorType}</td>
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-3 text-sm text-slate-500">{item.opening}</td>
+                    <td className="px-6 py-3 text-sm text-slate-500">{item.height}</td>
+                    <td className="px-6 py-3 text-sm text-slate-500">{item.doorType}</td>
+                    <td className="px-6 py-3">
                       <span className="text-xs font-bold text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
                         {item.fireRating}
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-sm text-slate-500">{item.panelType}</td>
-                    <td className="px-6 py-5 text-sm text-slate-500">{item.frameSize}</td>
-                    <td className="px-6 py-5 text-sm text-slate-500">{item.finish}</td>
-                    <td className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-tighter">{item.grade}</td>
-                    <td className="px-6 py-5 text-right">
-                      <span className="text-base font-bold text-slate-900">₹{item.price.toLocaleString('en-IN')}</span>
-                    </td>
-                    <td className="px-6 py-5 text-center">
-                      <button className="p-1.5 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-300 hover:text-slate-600">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                    <td className="px-6 py-3 text-sm text-slate-500">{item.panelType}</td>
+                    <td className="px-6 py-3 text-sm text-slate-500">{item.frameSize}</td>
+                    <td className="px-6 py-3 text-sm text-slate-500">{item.finish}</td>
+                    <td className="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">{item.grade}</td>
+                    <td className="px-6 py-3 text-right">
+                      <span className="text-base font-bold text-slate-900">
+                        ₹{((selectedVersion?.prices[item.id] || 0)).toLocaleString('en-IN')}
+                      </span>
+                      {selectedVersion && (
+                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
+                          as of {selectedVersion.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                        </p>
+                      )}
                     </td>
                   </tr>
                 ))}

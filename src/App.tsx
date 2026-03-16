@@ -6,7 +6,7 @@ import { ResultsSection } from './components/ResultsSection';
 import { PriceList } from './components/PriceList';
 import { cn } from './lib/utils';
 
-type Tab = 'Home' | 'Configurator' | 'Cost Simulator' | 'BOM Comparison' | 'Price List';
+type Tab = 'Home' | 'Configurator' | 'Cost Simulator' | 'BOM Comparison' | 'Price Book';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('BOM Comparison');
@@ -39,13 +39,13 @@ export default function App() {
           >
             {/* Upload Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <FileUploadCard 
-                title="Upload BOM 1 Excel" 
+              <FileUploadCard
+                title="Upload BOM 1 Excel"
                 subtitle="COR CD 02C 700x20 FVP"
                 onFileSelect={setFile1}
               />
-              <FileUploadCard 
-                title="Upload BOM 2 Excel" 
+              <FileUploadCard
+                title="Upload BOM 2 Excel"
                 subtitle="COR CD 02C 700x20 FVP"
                 onFileSelect={setFile2}
               />
@@ -57,9 +57,9 @@ export default function App() {
                 onClick={handleCompare}
                 disabled={!isReadyToCompare || isComparing}
                 className={cn(
-                  "px-12 py-4 rounded-full text-lg font-bold transition-all shadow-lg flex items-center gap-3",
-                  isReadyToCompare 
-                    ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95" 
+                  "px-12 py-4 rounded-lg text-lg font-bold transition-all shadow-lg flex items-center gap-3",
+                  isReadyToCompare
+                    ? "bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed"
                 )}
               >
@@ -88,7 +88,7 @@ export default function App() {
             </AnimatePresence>
           </motion.div>
         );
-      case 'Price List':
+      case 'Price Book':
         return (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -121,7 +121,7 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-8 h-full">
-          {['Home', 'Configurator', 'Cost Simulator', 'BOM Comparison', 'Price List'].map((item) => (
+          {['Home', 'Configurator', 'Cost Simulator', 'BOM Comparison', 'Price Book'].map((item) => (
             <button
               key={item}
               onClick={() => setActiveTab(item as Tab)}
@@ -132,9 +132,9 @@ export default function App() {
             >
               {item}
               {activeTab === item && (
-                <motion.div 
+                <motion.div
                   layoutId="activeTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" 
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
                 />
               )}
             </button>
@@ -149,8 +149,8 @@ export default function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-[1600px] mx-auto w-full p-8 md:p-12">
-        {activeTab !== 'Price List' && (
+      <main className="flex-1 max-w-full mx-auto w-full p-4 md:p-6">
+        {activeTab !== 'Price Book' && (
           <header className="mb-12">
             <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
               BOM Comparison Tool
