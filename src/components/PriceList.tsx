@@ -57,6 +57,7 @@ export const PriceList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(PINNED_COLUMNS);
   const [isColumnPickerOpen, setIsColumnPickerOpen] = useState(false);
+  const [isPriceHistoryOpen, setIsPriceHistoryOpen] = useState(false);
 
   /**
    * HOW TO MAP AN API CALL TO THIS TABLE:
@@ -242,7 +243,7 @@ export const PriceList: React.FC = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
-          <h2 className="text-2xl font-light text-slate-900 tracking-tight">Price Management</h2>
+          <h2 className="text-2xl font-light text-slate-900 tracking-tight">Price Book</h2>
           <p className="text-sm text-slate-500 font-medium">Manage and view pricing for all major partners.</p>
         </div>
 
@@ -442,115 +443,146 @@ export const PriceList: React.FC = () => {
                           exit={{ opacity: 0, width: 0 }}
                           transition={{ duration: 0.2, ease: "easeInOut" }}
                           className={cn(
-                            "px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap overflow-hidden",
-                            col === 'Price' ? "text-right" : ""
+                            "px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap",
+                            col === 'Price' ? "text-right z-30" : "overflow-hidden"
                           )}
                         >
                           {col === 'Price' ? (
-                            <div className="relative group/price inline-block text-right">
-                              <button className="flex items-center gap-1.5 hover:text-slate-600 transition-colors ml-auto">
-                                Price
-                                <ChevronDown className="w-3 h-3" />
-                              </button>
-                              <motion.div
-                                drag
-                                dragMomentum={false}
-                                className="absolute top-full right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-2xl opacity-0 invisible group-hover/price:opacity-100 group-hover/price:visible transition-all z-20 overflow-hidden cursor-default"
-                                onClick={(e) => e.stopPropagation()}
+                            <div className="relative inline-block text-right">
+                              <button
+                                onClick={() => setIsPriceHistoryOpen(!isPriceHistoryOpen)}
+                                className={cn(
+                                  "flex items-center gap-1.5 transition-colors ml-auto px-2 py-1 rounded-md",
+                                  isPriceHistoryOpen ? "text-blue-600 bg-blue-50" : "hover:text-slate-600"
+                                )}
                               >
-                                <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-slate-100/50 transition-colors">
-                                  <div className="flex items-center gap-2">
-                                    <GripVertical className="w-3 h-3 text-slate-400" />
-                                    <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Version History</p>
-                                  </div>
-                                  <span className="text-[9px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm italic">Draggable</span>
-                                </div>
-                                <div className="max-h-[400px] overflow-y-auto p-2 space-y-1">
-                                  {Object.entries(groupedVersions).sort(([y1], [y2]) => Number(y2) - Number(y1)).map(([year, months]) => {
-                                    const isYearExpanded = expandedYears.includes(Number(year));
-                                    return (
-                                      <div key={year} className="bg-slate-50/30 rounded-lg overflow-hidden border border-transparent hover:border-slate-100 transition-all">
-                                        <button
-                                          onClick={() => toggleYear(Number(year))}
-                                          className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-800 hover:text-slate-950 transition-colors"
-                                        >
-                                          <span className="flex items-center gap-2">
-                                            <ChevronRight className={cn("w-3 h-3 text-slate-400 transition-transform", isYearExpanded && "rotate-90")} />
-                                            {year}
-                                          </span>
-                                          <span className="text-[9px] text-slate-400 font-bold bg-white px-1 rounded border border-slate-100">
-                                            {Object.values(months).flat().length} Versions
-                                          </span>
-                                        </button>
+                                Price
+                                <ChevronDown className={cn("w-3 h-3 transition-transform", isPriceHistoryOpen && "rotate-180")} />
+                              </button>
 
-                                        <AnimatePresence>
-                                          {isYearExpanded && (
-                                            <motion.div
-                                              initial={{ height: 0 }}
-                                              animate={{ height: "auto" }}
-                                              exit={{ height: 0 }}
-                                              className="overflow-hidden bg-white/50"
-                                            >
-                                              <div className="px-1 pb-1 space-y-0.5">
-                                                {Object.entries(months).map(([month, MonthVersions]) => {
-                                                  const monthKey = `${year}-${month}`;
-                                                  const isMonthExpanded = expandedMonths.includes(monthKey);
-                                                  return (
-                                                    <div key={month} className="rounded-lg overflow-hidden border border-slate-50">
-                                                      <button
-                                                        onClick={() => toggleMonth(monthKey)}
-                                                        className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-slate-800 hover:bg-slate-50/50 transition-colors"
-                                                      >
-                                                        <span className="flex items-center gap-1.5">
-                                                          <ChevronRight className={cn("w-2.5 h-2.5 text-slate-400 transition-transform", isMonthExpanded && "rotate-90")} />
-                                                          {month}
-                                                        </span>
-                                                      </button>
-
-                                                      <AnimatePresence>
-                                                        {isMonthExpanded && (
-                                                          <motion.div
-                                                            initial={{ height: 0 }}
-                                                            animate={{ height: "auto" }}
-                                                            exit={{ height: 0 }}
-                                                            className="overflow-hidden"
-                                                          >
-                                                            <div className="p-1 space-y-1">
-                                                              {MonthVersions.map((v) => (
-                                                                <button
-                                                                  key={v.id}
-                                                                  onClick={() => setSelectedVersionId(v.id)}
-                                                                  className={cn(
-                                                                    "w-full text-left px-3 py-2 rounded-lg text-xs transition-all relative group",
-                                                                    selectedVersionId === v.id
-                                                                      ? "bg-slate-900 text-white font-bold shadow-md shadow-slate-200"
-                                                                      : "text-slate-800 font-medium hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100"
-                                                                  )}
-                                                                >
-                                                                  <div className="flex items-center justify-between">
-                                                                    <span>{v.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                                                                    {selectedVersionId === v.id && (
-                                                                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                                                                    )}
-                                                                  </div>
-                                                                </button>
-                                                              ))}
-                                                            </div>
-                                                          </motion.div>
-                                                        )}
-                                                      </AnimatePresence>
-                                                    </div>
-                                                  );
-                                                })}
-                                              </div>
-                                            </motion.div>
-                                          )}
-                                        </AnimatePresence>
+                              <AnimatePresence>
+                                {isPriceHistoryOpen && (
+                                  <>
+                                    <div className="fixed inset-0 z-30" onClick={() => setIsPriceHistoryOpen(false)} />
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                      drag
+                                      dragMomentum={false}
+                                      className="absolute top-full right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-2xl z-40 overflow-hidden cursor-default"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-slate-100/50 transition-colors">
+                                        <div className="flex items-center gap-2">
+                                          <GripVertical className="w-3 h-3 text-slate-400" />
+                                          <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Version History</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-[9px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm italic">Draggable</span>
+                                          <button
+                                            onClick={() => setIsPriceHistoryOpen(false)}
+                                            className="p-1 hover:bg-slate-200 rounded-full transition-colors"
+                                          >
+                                            <span className="sr-only">Close</span>
+                                            <svg className="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                          </button>
+                                        </div>
                                       </div>
-                                    );
-                                  })}
-                                </div>
-                              </motion.div>
+                                      <div className="max-h-[400px] overflow-y-auto p-2 space-y-3">
+                                        {Object.entries(groupedVersions).sort(([y1], [y2]) => Number(y2) - Number(y1)).map(([year, months]) => {
+                                          const isYearExpanded = expandedYears.includes(Number(year));
+                                          return (
+                                            <div key={year} className="bg-slate-50/30 rounded-lg overflow-hidden border border-transparent hover:border-slate-100 transition-all">
+                                              <button
+                                                onClick={() => toggleYear(Number(year))}
+                                                className="w-full flex items-center justify-between pl-4 pr-3 py-2.5 text-xs font-bold text-slate-800 hover:text-slate-950 transition-colors"
+                                              >
+                                                <span className="flex items-center gap-2">
+                                                  <ChevronRight className={cn("w-3 h-3 text-slate-400 transition-transform", isYearExpanded && "rotate-90")} />
+                                                  {year}
+                                                </span>
+                                                <span className="text-[9px] text-slate-400 font-bold bg-white px-1 rounded border border-slate-100">
+                                                  {Object.values(months).flat().length} Versions
+                                                </span>
+                                              </button>
+
+                                              <AnimatePresence>
+                                                {isYearExpanded && (
+                                                  <motion.div
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: "auto" }}
+                                                    exit={{ height: 0 }}
+                                                    className="overflow-hidden bg-white/50"
+                                                  >
+                                                    <div className="px-1 pb-1 space-y-1.5">
+                                                      {Object.entries(months).map(([month, MonthVersions]) => {
+                                                        const monthKey = `${year}-${month}`;
+                                                        const isMonthExpanded = expandedMonths.includes(monthKey);
+                                                        return (
+                                                          <div key={month} className="rounded-lg overflow-hidden border border-slate-50">
+                                                            <button
+                                                              onClick={() => toggleMonth(monthKey)}
+                                                              className="w-full flex items-center justify-between pl-12 pr-3 py-1.5 text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-slate-800 hover:bg-slate-50/50 transition-colors"
+                                                            >
+                                                              <span className="flex items-center gap-1.5">
+                                                                <ChevronRight className={cn("w-2.5 h-2.5 text-slate-400 transition-transform", isMonthExpanded && "rotate-90")} />
+                                                                {month}
+                                                              </span>
+                                                            </button>
+
+                                                            <AnimatePresence>
+                                                              {isMonthExpanded && (
+                                                                <motion.div
+                                                                  initial={{ height: 0 }}
+                                                                  animate={{ height: "auto" }}
+                                                                  exit={{ height: 0 }}
+                                                                  className="overflow-hidden"
+                                                                >
+                                                                  <div className="p-1 space-y-1">
+                                                                    {MonthVersions.map((v) => (
+                                                                      <button
+                                                                        key={v.id}
+                                                                        onClick={() => {
+                                                                          setSelectedVersionId(v.id);
+                                                                          setIsPriceHistoryOpen(false);
+                                                                        }}
+                                                                        className={cn(
+                                                                          "w-full text-left pl-20 pr-3 py-2 rounded-lg text-xs transition-all relative group",
+                                                                          selectedVersionId === v.id
+                                                                            ? "bg-slate-900 text-white font-bold shadow-md shadow-slate-200"
+                                                                            : "text-slate-800 font-medium hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-100"
+                                                                        )}
+                                                                      >
+                                                                        <div className="flex items-center justify-between">
+                                                                          <span>{v.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                                          {selectedVersionId === v.id && (
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                                                                          )}
+                                                                        </div>
+                                                                      </button>
+                                                                    ))}
+                                                                  </div>
+                                                                </motion.div>
+                                                              )}
+                                                            </AnimatePresence>
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  </motion.div>
+                                                )}
+                                              </AnimatePresence>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </motion.div>
+                                  </>
+                                )}
+                              </AnimatePresence>
                             </div>
                           ) : (
                             col
