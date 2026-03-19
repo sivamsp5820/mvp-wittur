@@ -28,7 +28,7 @@ import logo from './images/Logo.png';
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('BOM Comparison');
+  const [activeTab, setActiveTab] = useState('Price Book');
 
   const theme = createTheme({
     palette: {
