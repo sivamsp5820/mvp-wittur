@@ -98,7 +98,7 @@ export const PriceList = () => {
   const isPriceHistoryOpen = Boolean(priceHistoryAnchorEl);
 
   /**
-   * HOW TO MAP AN API CALL TO THIS TABLE:
+   * MAP AN API CALL TO THIS TABLE:
    * 
    * 1. Define your data interface (PriceItem) to match your API response.
    * 2. Use the useEffect hook to trigger the fetch whenever the customer changes.
