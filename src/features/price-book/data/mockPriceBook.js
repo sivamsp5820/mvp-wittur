@@ -1,24 +1,3 @@
-export interface PriceItem {
-    id: number;
-    code: string;
-    product: string;
-    type: string;
-    opening: string;
-    height: string;
-    doorType: string;
-    fireRating: string;
-    panelType: string;
-    frameSize: string;
-    finish: string;
-    grade: string;
-}
-
-export interface PriceVersion {
-    id: string;
-    date: Date;
-    prices: Record<number, number>;
-}
-
 export const MOCK_PRICING_DATA = [
     { id: 1, code: "E.COM.700.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "700mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 18500 },
     { id: 2, code: "E.COM.800.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "800mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 19200 },
@@ -42,7 +21,7 @@ export const MOCK_PRICING_DATA = [
     { id: 20, code: "E.COM.1000.2100.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "1000mm", height: "2100mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "120mm", finish: "Powder Coated", grade: "Grade A", price: 23500 }
 ];
 
-export const getMockVersions = (data: any[]): PriceVersion[] => [
+export const getMockVersions = (data) => [
     {
         id: 'v1',
         date: new Date(2026, 0, 10),
