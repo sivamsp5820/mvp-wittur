@@ -1,8 +1,9 @@
 import React from 'react';
 import { ChevronDown, Filter, Download } from 'lucide-react';
-import { Typography, Box, Button, Card, CardContent, Divider, Stack, Grid, LinearProgress, alpha } from '@mui/material';
+import { Typography, Box, Button, Card, CardContent, Divider, Stack, Grid, LinearProgress, alpha, useTheme } from '@mui/material';
 
 export const ResultsSection = () => {
+  const theme = useTheme();
   return (
     <Box sx={{ mt: 6 }}>
       <Stack
@@ -63,8 +64,8 @@ export const ResultsSection = () => {
               startIcon={<Download size={16} />}
               disableElevation
               sx={{
-                bgcolor: '#0d9488',
-                '&:hover': { bgcolor: '#0f766e' },
+                bgcolor: 'primary.main',
+                '&:hover': { bgcolor: 'primary.dark' },
                 textTransform: 'none',
                 px: 3
               }}
@@ -86,8 +87,8 @@ export const ResultsSection = () => {
                   sx={{
                     height: 8,
                     borderRadius: 4,
-                    bgcolor: 'grey.100',
-                    '& .MuiLinearProgress-bar': { bgcolor: '#0d9488', borderRadius: 4 }
+                    bgcolor: 'action.hover',
+                    '& .MuiLinearProgress-bar': { bgcolor: 'primary.main', borderRadius: 4 }
                   }}
                 />
               </Stack>
@@ -104,8 +105,8 @@ export const ResultsSection = () => {
                   sx={{
                     height: 8,
                     borderRadius: 4,
-                    bgcolor: 'grey.100',
-                    '& .MuiLinearProgress-bar': { bgcolor: 'grey.400', borderRadius: 4 }
+                    bgcolor: 'action.hover',
+                    '& .MuiLinearProgress-bar': { bgcolor: 'text.disabled', borderRadius: 4 }
                   }}
                 />
               </Stack>
@@ -118,8 +119,8 @@ export const ResultsSection = () => {
             <Typography
               variant="subtitle2"
               sx={{
-                bgcolor: alpha('#10b981', 0.1),
-                color: '#059669',
+                bgcolor: alpha(theme.palette.success.main, 0.1),
+                color: 'success.main',
                 px: 1,
                 py: 0.5,
                 borderRadius: 1,

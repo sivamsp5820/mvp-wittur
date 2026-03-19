@@ -27,7 +27,8 @@ import {
   Chip,
   Popover,
   Grow,
-  Pagination
+  Pagination,
+  useTheme
 } from '@mui/material';
 
 const CUSTOMERS = ['Independent', 'Otis', 'Kone', 'TKEI', 'Mitsubishi', 'Schindler'];
@@ -51,6 +52,7 @@ const COLUMNS = [
 const PINNED_COLUMNS = ["S.No", "Item Code", "Price"];
 
 export const PriceList = () => {
+  const theme = useTheme();
   const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState([]);
@@ -67,7 +69,8 @@ export const PriceList = () => {
   const columnCountTimerRef = useRef(null);
   const [priceHistoryAnchorEl, setPriceHistoryAnchorEl] = useState(null);
   const [page, setPage] = useState(1);
-  const rowsPerPage = 10;
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const rowsOptions = [10, 25, 50, 75, 100];
 
   const handleColumnPickerClick = (event) => {
     setColumnPickerAnchorEl(event.currentTarget);
@@ -211,7 +214,7 @@ export const PriceList = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, selectedCustomer]);
+  }, [searchTerm, selectedCustomer, rowsPerPage]);
 
   const selectedVersion = versions.find(v => v.id === selectedVersionId);
 
@@ -285,7 +288,7 @@ export const PriceList = () => {
               value={selectedCustomer}
               label="Customer"
               onChange={(e) => setSelectedCustomer(e.target.value)}
-              sx={{ bgcolor: 'white', borderRadius: 2 }}
+              sx={{ bgcolor: 'background.paper', borderRadius: 2 }}
             >
               {CUSTOMERS.map(customer => (
                 <MenuItem key={customer} value={customer}>{customer}</MenuItem>
@@ -305,7 +308,7 @@ export const PriceList = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ bgcolor: 'white', borderRadius: 2, width: { xs: '100%', md: 260 } }}
+            sx={{ bgcolor: 'background.paper', borderRadius: 2, width: { xs: '100%', md: 260 } }}
           />
 
           {selectedCustomer === 'Independent' && (
@@ -324,8 +327,8 @@ export const PriceList = () => {
                 onClick={() => fileInputRef.current?.click()}
                 disableElevation
                 sx={{
-                  bgcolor: '#0f172a',
-                  '&:hover': { bgcolor: '#1e293b' },
+                  bgcolor: theme.palette.mode === 'dark' ? 'primary.main' : '#0f172a',
+                  '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'primary.dark' : '#1e293b' },
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   px: 2,
@@ -348,11 +351,13 @@ export const PriceList = () => {
           overflow: 'hidden',
           minHeight: 400,
           position: 'relative',
-          borderColor: 'grey.100',
-          boxShadow: '0 10px 40px -10px rgba(0,0,0,0.05)'
+          borderColor: 'divider',
+          boxShadow: theme.palette.mode === 'dark'
+            ? '0 10px 40px -10px rgba(0,0,0,0.3)'
+            : '0 10px 40px -10px rgba(0,0,0,0.05)'
         }}
       >
-        <Box sx={{ px: 4, py: 3, borderBottom: '1px solid', borderColor: 'grey.50', display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: alpha('#f8fafc', 0.5) }}>
+        <Box sx={{ px: 4, py: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: alpha(theme.palette.background.default, 0.5) }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
               Products
@@ -387,9 +392,9 @@ export const PriceList = () => {
                       height: 24,
                       fontSize: '0.7rem',
                       fontWeight: 700,
-                      bgcolor: alpha('#0d9488', 0.1),
-                      color: '#0d9488',
-                      borderColor: alpha('#0d9488', 0.2),
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main',
+                      borderColor: alpha(theme.palette.primary.main, 0.2),
                       border: '1px solid'
                     }}
                   />
@@ -517,7 +522,7 @@ export const PriceList = () => {
                           exit={{ opacity: 0, x: 10 }}
                           transition={{ duration: 0.25, ease: 'easeOut' }}
                           sx={{
-                            bgcolor: '#f8fafc',
+                            bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#f8fafc',
                             fontWeight: 800,
                             fontSize: '0.75rem',
                             textTransform: 'uppercase',
@@ -526,12 +531,12 @@ export const PriceList = () => {
                             py: 2,
                             px: 3,
                             borderBottom: '1px solid',
-                            borderColor: 'grey.50',
+                            borderColor: 'divider',
                             cursor: isPrice ? 'pointer' : 'default',
                             whiteSpace: 'nowrap',
                             minWidth: isPrice ? 120 : 'auto',
                             textAlign: isPrice ? 'right' : 'left',
-                            '&:hover': isPrice ? { bgcolor: alpha('#0d9488', 0.05) } : {}
+                            '&:hover': isPrice ? { bgcolor: alpha(theme.palette.primary.main, 0.05) } : {}
                           }}
                           onClick={isPrice ? handlePriceHeaderClick : undefined}
                         >
@@ -551,8 +556,8 @@ export const PriceList = () => {
                     key={item.id}
                     hover
                     sx={{
-                      '&:hover': { bgcolor: alpha('#f8fafc', 0.8) },
-                      '& td': { py: 2, px: 3, borderBottom: '1px solid', borderColor: 'grey.50' }
+                      '&:hover': { bgcolor: alpha(theme.palette.background.default, 0.8) },
+                      '& td': { py: 2, px: 3, borderBottom: '1px solid', borderColor: 'divider' }
                     }}
                   >
                     <AnimatePresence mode="popLayout">
@@ -623,7 +628,41 @@ export const PriceList = () => {
 
         {/* Pagination Footer */}
         {!isLoading && filteredData.length > 0 && (
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', borderTop: '1px solid', borderColor: 'grey.50', bgcolor: alpha('#f8fafc', 0.5) }}>
+          <Box sx={{
+            p: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: alpha(theme.palette.background.default, 0.5),
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2
+          }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                Rows per page:
+              </Typography>
+              <Select
+                value={rowsPerPage}
+                onChange={(e) => { setRowsPerPage(e.target.value); setPage(1); }}
+                size="small"
+                variant="standard"
+                disableUnderline
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  '& .MuiSelect-select': { py: 0.5, px: 1, color: 'primary.main' }
+                }}
+              >
+                {rowsOptions.map(opt => (
+                  <MenuItem key={opt} value={opt} sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                    {opt}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Stack>
+
             <Pagination
               count={Math.ceil(filteredData.length / rowsPerPage)}
               page={page}

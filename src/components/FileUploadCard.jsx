@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { UploadCloud, FileText, X } from 'lucide-react';
-import { Card, CardContent, Typography, Box, Button, IconButton, Stack, alpha } from '@mui/material';
+import { Card, CardContent, Typography, Box, Button, IconButton, Stack, alpha, useTheme } from '@mui/material';
 
 export const FileUploadCard = ({ title, subtitle, onFileSelect }) => {
+  const theme = useTheme();
   const [file, setFile] = useState(null);
 
   const onDrop = useCallback((acceptedFiles) => {
@@ -50,12 +51,14 @@ export const FileUploadCard = ({ title, subtitle, onFileSelect }) => {
             p: 4,
             transition: 'all 0.2s',
             cursor: 'pointer',
-            bgcolor: isDragActive ? alpha('#0d9488', 0.05) : (file ? alpha('#0d9488', 0.05) : 'transparent'),
+            bgcolor: isDragActive
+              ? alpha(theme.palette.primary.main, 0.05)
+              : (file ? alpha(theme.palette.primary.main, 0.05) : 'transparent'),
             '&:hover': {
               borderColor: 'primary.light',
-              bgcolor: alpha('#0d9488', 0.02),
+              bgcolor: alpha(theme.palette.primary.main, 0.02),
             },
-            ...(file && { borderColor: alpha('#0d9488', 0.3) })
+            ...(file && { borderColor: alpha(theme.palette.primary.main, 0.3) })
           }}
         >
           <input {...getInputProps()} />
@@ -66,7 +69,7 @@ export const FileUploadCard = ({ title, subtitle, onFileSelect }) => {
                 sx={{
                   w: 48,
                   h: 48,
-                  bgcolor: alpha('#0d9488', 0.1),
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -75,7 +78,7 @@ export const FileUploadCard = ({ title, subtitle, onFileSelect }) => {
                   p: 1.5
                 }}
               >
-                <FileText color="#0d9488" />
+                <FileText color={theme.palette.primary.main} />
               </Box>
               <Typography variant="body2" sx={{ fontWeight: 500, maxWidth: 200, noWrap: true }}>
                 {file.name}
@@ -95,7 +98,7 @@ export const FileUploadCard = ({ title, subtitle, onFileSelect }) => {
             </Stack>
           ) : (
             <Stack spacing={2} alignItems="center" textAlign="center">
-              <UploadCloud size={48} color="#94a3b8" />
+              <UploadCloud size={48} color={theme.palette.text.secondary} />
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                 Select or Drag & Drop file here
               </Typography>
@@ -104,8 +107,8 @@ export const FileUploadCard = ({ title, subtitle, onFileSelect }) => {
                 disableElevation
                 sx={{
                   mt: 2,
-                  bgcolor: '#0d9488',
-                  '&:hover': { bgcolor: '#0f766e' },
+                  bgcolor: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.dark' },
                   textTransform: 'none',
                   px: 3
                 }}
