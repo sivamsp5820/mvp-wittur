@@ -85,6 +85,9 @@ export default function App() {
       }
     },
   });
+
+
+
   const [file1, setFile1] = useState(null);
   const [file2, setFile2] = useState(null);
   const [isComparing, setIsComparing] = useState(false);

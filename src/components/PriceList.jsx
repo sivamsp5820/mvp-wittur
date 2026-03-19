@@ -327,8 +327,8 @@ export const PriceList = () => {
                 onClick={() => fileInputRef.current?.click()}
                 disableElevation
                 sx={{
-                  bgcolor: theme.palette.mode === 'dark' ? 'primary.main' : '#0f172a',
-                  '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'primary.dark' : '#1e293b' },
+                  bgcolor: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.dark' },
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   px: 2,
