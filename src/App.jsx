@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { User, Triangle, Moon, Sun, Settings } from 'lucide-react';
 import { FileUploadCard } from './components/FileUploadCard';
 import { ResultsSection } from './components/ResultsSection';
-import { PriceList } from './components/PriceList';
+import { PriceList } from './components/PriceList/PriceList';
 import {
   Box,
   Container,

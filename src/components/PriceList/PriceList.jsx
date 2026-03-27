@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronDown, Search, Download, Upload, MoreHorizontal, Info, Loader2, GripVertical, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { ChevronDown, Search, Download, Upload, MoreHorizontal, Info, Loader2, GripVertical, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Box,
@@ -28,31 +28,29 @@ import {
   Popover,
   Grow,
   Pagination,
-  useTheme
+  useTheme,
+  Dialog,
+  DialogContent,
+  DialogTitle
 } from '@mui/material';
 
-const CUSTOMERS = ['Independent', 'Otis', 'Kone', 'TKEI', 'Mitsubishi', 'Schindler'];
+import {
+  CUSTOMERS,
+  COLUMNS,
+  PINNED_COLUMNS,
+  MOCK_PRICING_DATA,
+  MITSUBISHI_DEFAULT_NEW_INDEX,
+  getMockVersions
+} from '../../data/mockPriceListData';
+import MitsubishiTable from './MitsubishiTable';
+import MaterialWeightsDialog from './MaterialWeightsDialog';
+import PriceHistoryPopover from './PriceHistoryPopover';
+import mitsubishiMainData from '../../data/mitsubishiMainData.json';
 
-const COLUMNS = [
-  "S.No",
-  "Item Code",
-  "Product",
-  "Type",
-  "Clear Opening",
-  "Clear Height",
-  "Door type",
-  "Fire rated code",
-  "Panel Type",
-  "Frame Size",
-  "Finish",
-  "Grade",
-  "Price"
-];
-
-const PINNED_COLUMNS = ["S.No", "Item Code", "Price"];
 
 export const PriceList = () => {
   const theme = useTheme();
+
   const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState([]);
@@ -71,6 +69,90 @@ export const PriceList = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const rowsOptions = [10, 25, 50, 75, 100];
+  const [materialWeightsOpen, setMaterialWeightsOpen] = useState(false);
+  const [posVarianceThreshold, setPosVarianceThreshold] = useState('0');
+  const [negVarianceThreshold, setNegVarianceThreshold] = useState('0');
+
+  // Editable Index State
+  const [newIndexDate, setNewIndexDate] = useState('2026-01-01');
+  const [newIndexPrices, setNewIndexPrices] = useState(MITSUBISHI_DEFAULT_NEW_INDEX);
+
+  // --- DYNAMIC COLUMNS (Mitsubishi Main Table) ---
+  const [dynamicColumns, setDynamicColumns] = useState(() => {
+    const saved = localStorage.getItem('mitsubishi_dynamic_columns');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [dynamicValues, setDynamicValues] = useState(() => {
+    const saved = localStorage.getItem('mitsubishi_dynamic_values');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mitsubishi_dynamic_columns', JSON.stringify(dynamicColumns));
+  }, [dynamicColumns]);
+
+  useEffect(() => {
+    localStorage.setItem('mitsubishi_dynamic_values', JSON.stringify(dynamicValues));
+  }, [dynamicValues]);
+
+  const addDynamicColumn = useCallback(() => {
+    const name = prompt('Enter new column name:');
+    if (!name) return;
+    if (dynamicColumns.some(col => col.name.toLowerCase() === name.toLowerCase())) {
+      alert('Column already exists!');
+      return;
+    }
+    const newCol = {
+      id: `dyn_${Date.now()}`,
+      name: name,
+      type: 'add'
+    };
+    setDynamicColumns([...dynamicColumns, newCol]);
+  }, [dynamicColumns]);
+
+  const toggleColumnType = useCallback((colId) => {
+    setDynamicColumns(prev => prev.map(col =>
+      col.id === colId ? { ...col, type: col.type === 'add' ? 'subtract' : 'add' } : col
+    ));
+  }, []);
+
+  const deleteColumn = useCallback((colId) => {
+    if (confirm('Delete this column and all its values?')) {
+      setDynamicColumns(prev => prev.filter(col => col.id !== colId));
+      setDynamicValues(prev => {
+        const next = { ...prev };
+        Object.keys(next).forEach(rowId => {
+          if (next[rowId]) {
+            const rowData = { ...next[rowId] };
+            delete rowData[colId];
+            next[rowId] = rowData;
+          }
+        });
+        return next;
+      });
+    }
+  }, []);
+
+  const updateDynamicValue = useCallback((itemId, colId, value) => {
+    setDynamicValues(prev => ({
+      ...prev,
+      [itemId]: {
+        ...(prev[itemId] || {}),
+        [colId]: value
+      }
+    }));
+  }, []);
+
+  const handleNewIndexPriceChange = useCallback((index, field, value) => {
+    setNewIndexPrices(prev => {
+      const updated = [...prev];
+      if (updated[index]) {
+        updated[index] = { ...updated[index], [field]: value };
+      }
+      return updated;
+    });
+  }, []);
 
   const handleColumnPickerClick = (event) => {
     setColumnPickerAnchorEl(event.currentTarget);
@@ -97,98 +179,94 @@ export const PriceList = () => {
 
   const isPriceHistoryOpen = Boolean(priceHistoryAnchorEl);
 
+  const mitsubishiHeaderStyle = useMemo(() => ({
+    bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#f8fafc',
+    fontWeight: 800,
+    fontSize: '0.75rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'text.disabled',
+    py: 2,
+    px: 2,
+    borderBottom: '1px solid',
+    borderColor: 'divider',
+    whiteSpace: 'nowrap',
+    textAlign: 'center'
+  }), [theme.palette.mode]);
+
+  const mitsubishiHeadersList = useMemo(() => [
+    <TableCell key="sn" sx={mitsubishiHeaderStyle}>SI. NO</TableCell>,
+    <TableCell key="co" sx={mitsubishiHeaderStyle}>CO</TableCell>,
+    <TableCell key="ch" sx={mitsubishiHeaderStyle}>CH</TableCell>,
+    <TableCell key="fi" sx={mitsubishiHeaderStyle}>FINISH (Z Column)</TableCell>,
+    <TableCell key="wpn" sx={mitsubishiHeaderStyle}>WIN PART NUMBER</TableCell>,
+    <TableCell key="desc" sx={mitsubishiHeaderStyle}>DESCRIPTION</TableCell>,
+    <TableCell key="imec" sx={mitsubishiHeaderStyle}>IMEC PART NUMBER</TableCell>,
+    <TableCell key="rev" sx={mitsubishiHeaderStyle}>Revised Price for Q4 2025</TableCell>,
+    <TableCell key="rm" sx={mitsubishiHeaderStyle}>RM Price movement</TableCell>,
+    <TableCell key="add" sx={{ ...mitsubishiHeaderStyle, width: 50, p: 0, textAlign: 'center' }}>
+      <Tooltip title="Add adjustment column">
+        <IconButton size="small" onClick={addDynamicColumn} sx={{ color: 'primary.main' }}>
+          <MoreHorizontal size={16} />
+        </IconButton>
+      </Tooltip>
+    </TableCell>,
+    ... (dynamicColumns || []).map(col => (
+      <TableCell key={col.id} sx={mitsubishiHeaderStyle}>
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
+          <Typography variant="caption" sx={{ fontWeight: 800 }}>{col.name}</Typography>
+          <Tooltip title={col.type === 'add' ? 'Switch to subtract' : 'Switch to add'}>
+            <Button
+              size="small"
+              onClick={() => toggleColumnType(col.id)}
+              sx={{
+                minWidth: 28,
+                height: 20,
+                p: 0,
+                fontSize: '0.65rem',
+                fontWeight: 900,
+                bgcolor: col.type === 'add' ? 'success.light' : 'error.light',
+                color: 'white',
+                '&:hover': { bgcolor: col.type === 'add' ? 'success.main' : 'error.main' }
+              }}
+            >
+              {col.type === 'add' ? '+' : '-'}
+            </Button>
+          </Tooltip>
+          <IconButton size="small" onClick={() => deleteColumn(col.id)} sx={{ p: 0, color: 'text.disabled', '&:hover': { color: 'error.main' } }}>
+            <X size={12} />
+          </IconButton>
+        </Stack>
+      </TableCell>
+    )),
+    <TableCell key="price" sx={{ ...mitsubishiHeaderStyle, color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.05) }}>Price</TableCell>
+  ], [theme, dynamicColumns, deleteColumn, toggleColumnType, addDynamicColumn, mitsubishiHeaderStyle]);
+
   /**
    * MAP AN API CALL TO THIS TABLE:
-   * 
-   * 1. Define your data interface (PriceItem) to match your API response.
-   * 2. Use the useEffect hook to trigger the fetch whenever the customer changes.
-   * 3. Map the API response fields to the PriceItem fields if they differ.
    */
   useEffect(() => {
     const fetchPricing = async () => {
       setIsLoading(true);
       setError(null);
-
       try {
-        // --- SIMULATED API CALL ---
-        await new Promise(resolve => setTimeout(resolve, 1200)); // Simulate latency
-
-        const mockData = [
-          { id: 1, code: "E.COM.700.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "700mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 18500 },
-          { id: 2, code: "E.COM.800.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "800mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 19200 },
-          { id: 3, code: "E.COM.900.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "900mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 21000 },
-          { id: 4, code: "E.COM.1000.2000.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "1000mm", height: "2000mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "120mm", finish: "Powder Coated", grade: "Grade A", price: 22500 },
-          { id: 5, code: "E.COM.700.2000.L2T.E120.PF", product: "Telescopic Door", type: "Premium", opening: "700mm", height: "2000mm", doorType: "L2T", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade B+", price: 24000 },
-          { id: 6, code: "E.COM.800.2000.L2T.E120.PF", product: "Telescopic Door", type: "Premium", opening: "800mm", height: "2000mm", doorType: "L2T", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade B+", price: 25500 },
-          { id: 7, code: "E.COM.900.2000.L2T.E120.PF", product: "Telescopic Door", type: "Premium", opening: "900mm", height: "2000mm", doorType: "L2T", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade B+", price: 27000 },
-          { id: 8, code: "E.COM.1000.2000.L2T.E120.PF", product: "Telescopic Door", type: "Premium", opening: "1000mm", height: "2000mm", doorType: "L2T", fireRating: "E120", panelType: "PF", frameSize: "120mm", finish: "Powder Coated", grade: "Grade B+", price: 29500 },
-          { id: 9, code: "E.EA.FRM.700.2000.L2C.90.PF", product: "Fire Rated Frame", type: "Safety", opening: "700mm", height: "2000mm", doorType: "L2C", fireRating: "90 Min", panelType: "PF", frameSize: "150mm", finish: "Zinc Primed", grade: "Industrial", price: 12000 },
-          { id: 10, code: "E.EA.FRM.800.2000.L2C.90.PF", product: "Fire Rated Frame", type: "Safety", opening: "800mm", height: "2000mm", doorType: "L2C", fireRating: "90 Min", panelType: "PF", frameSize: "150mm", finish: "Zinc Primed", grade: "Industrial", price: 13500 },
-          { id: 11, code: "E.EA.FRM.900.2000.L2C.90.PF", product: "Fire Rated Frame", type: "Safety", opening: "900mm", height: "2000mm", doorType: "L2C", fireRating: "90 Min", panelType: "PF", frameSize: "150mm", finish: "Zinc Primed", grade: "Industrial", price: 14800 },
-          { id: 12, code: "E.EA.FRM.1000.2000.L2C.90.PF", product: "Fire Rated Frame", type: "Safety", opening: "1000mm", height: "2000mm", doorType: "L2C", fireRating: "90 Min", panelType: "PF", frameSize: "180mm", finish: "Zinc Primed", grade: "Industrial", price: 16200 },
-          { id: 13, code: "E.EA.FRM.700.2000.L2T.90.PF", product: "Telescopic Frame", type: "Safety", opening: "700mm", height: "2000mm", doorType: "L2T", fireRating: "90 Min", panelType: "PF", frameSize: "150mm", finish: "Zinc Primed", grade: "Industrial", price: 18500 },
-          { id: 14, code: "E.EA.FRM.800.2000.L2T.90.PF", product: "Telescopic Frame", type: "Safety", opening: "800mm", height: "2000mm", doorType: "L2T", fireRating: "90 Min", panelType: "PF", frameSize: "150mm", finish: "Zinc Primed", grade: "Industrial", price: 19800 },
-          { id: 15, code: "E.EA.FRM.900.2000.L2T.90.PF", product: "Telescopic Frame", type: "Safety", opening: "900mm", height: "2000mm", doorType: "L2T", fireRating: "90 Min", panelType: "PF", frameSize: "150mm", finish: "Zinc Primed", grade: "Industrial", price: 21500 },
-          { id: 16, code: "E.EA.FRM.1000.2000.L2T.90.PF", product: "Telescopic Frame", type: "Safety", opening: "1000mm", height: "2000mm", doorType: "L2T", fireRating: "90 Min", panelType: "PF", frameSize: "180mm", finish: "Zinc Primed", grade: "Industrial", price: 23000 },
-          { id: 17, code: "E.COM.700.2100.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "700mm", height: "2100mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 19500 },
-          { id: 18, code: "E.COM.800.2100.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "800mm", height: "2100mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 20200 },
-          { id: 19, code: "E.COM.900.2100.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "900mm", height: "2100mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "100mm", finish: "Powder Coated", grade: "Grade A", price: 22000 },
-          { id: 20, code: "E.COM.1000.2100.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "1000mm", height: "2100mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "120mm", finish: "Powder Coated", grade: "Grade A", price: 23500 }
-        ];
-
-        const mockItems = mockData.map(({ price, ...item }) => item);
-
-        const mockVersions = [
-          {
-            id: 'v1',
-            date: new Date(2026, 0, 10),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.92 }), {})
-          },
-          {
-            id: 'v2',
-            date: new Date(2026, 2, 14),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.95 }), {})
-          },
-          {
-            id: 'v3',
-            date: new Date(2026, 2, 25),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.98 }), {})
-          },
-          {
-            id: 'v4',
-            date: new Date(2026, 3, 1),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price }), {})
-          },
-          {
-            id: 'v5',
-            date: new Date(2026, 3, 20),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 1.05 }), {})
-          },
-          {
-            id: 'v2025-1',
-            date: new Date(2025, 11, 15),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.88 }), {})
-          },
-          {
-            id: 'v2025-2',
-            date: new Date(2025, 10, 22),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.85 }), {})
-          },
-          {
-            id: 'v2025-3',
-            date: new Date(2025, 9, 5),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.82 }), {})
-          },
-          {
-            id: 'v2024-1',
-            date: new Date(2024, 11, 1),
-            prices: mockData.reduce((acc, item) => ({ ...acc, [item.id]: item.price * 0.75 }), {})
-          }
-        ].sort((a, b) => b.date.getTime() - a.date.getTime());
-
-        setData(mockItems);
-        setVersions(mockVersions);
-        setSelectedVersionId(mockVersions[0].id);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (selectedCustomer === 'Mitsubishi') {
+          setData(mitsubishiMainData);
+          const mitsubishiVersion = {
+            id: 'mits-v1',
+            date: new Date(),
+            prices: mitsubishiMainData.reduce((acc, item) => ({ ...acc, [item.id]: item.revisedPrice }), {})
+          };
+          setVersions([mitsubishiVersion]);
+          setSelectedVersionId(mitsubishiVersion.id);
+        } else {
+          const mockItems = MOCK_PRICING_DATA.map(({ price, ...item }) => item);
+          const mockVersions = getMockVersions(MOCK_PRICING_DATA);
+          setData(mockItems);
+          setVersions(mockVersions);
+          setSelectedVersionId(mockVersions[0].id);
+        }
       } catch (err) {
         setError('Failed to load pricing data. Please check your connection.');
         console.error(err);
@@ -196,15 +274,19 @@ export const PriceList = () => {
         setIsLoading(false);
       }
     };
-
     fetchPricing();
   }, [selectedCustomer]);
 
   const filteredData = useMemo(() => {
-    return data.filter(item =>
-      item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.product.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    if (!data || !Array.isArray(data)) return [];
+    
+    return data.filter(item => {
+      if (!item) return false;
+      const code = (item.code || item.winPartNumber || '').toLowerCase();
+      const product = (item.product || item.description || '').toLowerCase();
+      const search = searchTerm.toLowerCase();
+      return code.includes(search) || product.includes(search);
+    });
   }, [data, searchTerm]);
 
   const paginatedData = useMemo(() => {
@@ -339,8 +421,42 @@ export const PriceList = () => {
               </Button>
             </>
           )}
+
+          {selectedCustomer === 'Mitsubishi' && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setMaterialWeightsOpen(true)}
+              sx={{
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontWeight: 700,
+                px: 2,
+                height: 40,
+                background: 'rgba(13, 148, 136, 0.05)',
+                '&:hover': { background: 'rgba(13, 148, 136, 0.1)' }
+              }}
+            >
+              Show Material Weights
+            </Button>
+          )}
         </Stack>
       </Stack>
+
+      {/* Merged Mitsubishi Table */}
+      {selectedCustomer === 'Mitsubishi' && (
+        <MitsubishiTable
+          newIndexDate={newIndexDate}
+          setNewIndexDate={setNewIndexDate}
+          newIndexPrices={newIndexPrices}
+          handleNewIndexPriceChange={handleNewIndexPriceChange}
+          posVarianceThreshold={posVarianceThreshold}
+          setPosVarianceThreshold={setPosVarianceThreshold}
+          negVarianceThreshold={negVarianceThreshold}
+          setNegVarianceThreshold={setNegVarianceThreshold}
+          onShowWeights={() => setMaterialWeightsOpen(true)}
+        />
+      )}
 
       {/* Table Container */}
       <Paper
@@ -357,14 +473,14 @@ export const PriceList = () => {
             : '0 10px 40px -10px rgba(0,0,0,0.05)'
         }}
       >
-        <Box sx={{ px: 4, py: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: alpha(theme.palette.background.default, 0.5) }}>
+      <Box sx={{ px: 4, py: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: alpha(theme.palette.background.default, 0.5) }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
               Products
             </Typography>
             {!isLoading && (
               <Stack direction="row" spacing={1} alignItems="center">
-                <Typography variant="caption" sx={{ color: 'text.disabled', fontWeight: 600 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                   {filteredData.length > 0 ? `${(page - 1) * rowsPerPage + 1} to ${Math.min(page * rowsPerPage, filteredData.length)} of ${filteredData.length}` : '0 of 0'}
                 </Typography>
                 <Chip
@@ -507,20 +623,16 @@ export const PriceList = () => {
           </Box>
         ) : (
           <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
-            <Table stickyHeader size="small">
+            <Table stickyHeader size="small" key={selectedCustomer}>
               <TableHead>
                 <TableRow>
-                  <AnimatePresence mode="popLayout">
-                    {[...visibleColumns.filter(c => c !== 'Price'), 'Price'].map(col => {
+                  {selectedCustomer === 'Mitsubishi' ? mitsubishiHeadersList : (
+                    visibleColumns && [...visibleColumns.filter(c => c !== 'Price'), 'Price'].map(col => {
                       const isPrice = col === 'Price';
+                      const primaryMain = theme.palette?.primary?.main || '#0d9488';
                       return (
                         <TableCell
                           key={col}
-                          component={motion.th}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 10 }}
-                          transition={{ duration: 0.25, ease: 'easeOut' }}
                           sx={{
                             bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#f8fafc',
                             fontWeight: 800,
@@ -536,7 +648,7 @@ export const PriceList = () => {
                             whiteSpace: 'nowrap',
                             minWidth: isPrice ? 120 : 'auto',
                             textAlign: isPrice ? 'right' : 'left',
-                            '&:hover': isPrice ? { bgcolor: alpha(theme.palette.primary.main, 0.05) } : {}
+                            '&:hover': isPrice ? { bgcolor: alpha(primaryMain, 0.05) } : {}
                           }}
                           onClick={isPrice ? handlePriceHeaderClick : undefined}
                         >
@@ -546,24 +658,86 @@ export const PriceList = () => {
                           </Stack>
                         </TableCell>
                       );
-                    })}
-                  </AnimatePresence>
+                    })
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedData.map((item, index) => (
-                  <TableRow
-                    key={item.id}
-                    hover
-                    sx={{
-                      '&:hover': { bgcolor: alpha(theme.palette.background.default, 0.8) },
-                      '& td': { py: 2, px: 3, borderBottom: '1px solid', borderColor: 'divider' }
-                    }}
-                  >
-                    <AnimatePresence mode="popLayout">
-                      {[...visibleColumns.filter(c => c !== 'Price'), 'Price'].map(col => {
+                {paginatedData.map((item, index) => {
+                  const serialNumber = (page - 1) * rowsPerPage + index + 1;
+                  const basePrice = selectedVersion?.prices[item.id] || 0;
+
+                  // Calculate final price based on dynamic columns
+                  let finalPrice = basePrice;
+                  dynamicColumns.forEach(col => {
+                    const val = parseFloat(dynamicValues[item.id]?.[col.id]) || 0;
+                    if (col.type === 'add') finalPrice += val;
+                    else finalPrice -= val;
+                  });
+
+                  if (selectedCustomer === 'Mitsubishi') {
+                    const mitsubishiRow = [
+                      <TableCell key="sn" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{serialNumber}</Typography></TableCell>,
+                      <TableCell key="co" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{item.co}</Typography></TableCell>,
+                      <TableCell key="ch" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{item.ch}</Typography></TableCell>,
+                      <TableCell key="fi" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{item.finish}</Typography></TableCell>,
+                      <TableCell key="wpn" align="center"><Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.7rem', fontFamily: 'monospace' }}>{item.winPartNumber}</Typography></TableCell>,
+                      <TableCell key="desc" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</Typography></TableCell>,
+                      <TableCell key="imec" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.disabled' }}>{item.imecPartNumber}</Typography></TableCell>,
+                      <TableCell key="rev" align="center"><Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}>₹ {basePrice.toLocaleString()}</Typography></TableCell>,
+                      <TableCell key="rm" align="center"><Typography variant="body2" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'info.main' }}>{item.rmMovement}</Typography></TableCell>,
+                      <TableCell key="add" sx={{ width: 50 }}></TableCell>,
+                      ...dynamicColumns.map(col => (
+                        <TableCell key={col.id} align="center">
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            type="number"
+                            value={dynamicValues[item.id]?.[col.id] || ''}
+                            onChange={(e) => updateDynamicValue(item.id, col.id, e.target.value)}
+                            sx={{
+                              width: 70,
+                              '& .MuiInputBase-input': {
+                                py: 0.4, px: 0.8, fontSize: '0.75rem', fontWeight: 700, textAlign: 'center',
+                                bgcolor: alpha(col.type === 'add' ? theme.palette.success.main : theme.palette.error.main, 0.05)
+                              }
+                            }}
+                          />
+                        </TableCell>
+                      )),
+                      <TableCell key="fprice" align="center" sx={{
+                        bgcolor: alpha(theme.palette.primary.main, 0.05),
+                        borderLeft: '2px solid',
+                        borderColor: 'primary.main',
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          inset: 0,
+                          bgcolor: finalPrice !== basePrice ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                          transition: 'background-color 0.3s'
+                        }
+                      }}><Typography variant="body2" sx={{ fontWeight: 900, color: 'primary.main', fontSize: '0.9rem', position: 'relative', zIndex: 1, whiteSpace: 'nowrap' }}>₹ {finalPrice.toLocaleString()}</Typography></TableCell>
+                    ];
+
+                    return (
+                      <TableRow key={item.id} hover sx={{ '& td': { py: 1, px: 2, borderBottom: '1px solid', borderColor: 'divider' } }}>{mitsubishiRow}</TableRow>
+                    );
+                  }
+
+
+                  // Default rendering for other customers
+                  return (
+                    <TableRow
+                      key={item.id}
+                      hover
+                      sx={{
+                        '&:hover': { bgcolor: alpha(theme.palette.background.default, 0.8) },
+                        '& td': { py: 2, px: 3, borderBottom: '1px solid', borderColor: 'divider' }
+                      }}
+                    >
+                      { [...visibleColumns.filter(c => c !== 'Price'), 'Price'].map(col => {
                         let content;
-                        const serialNumber = (page - 1) * rowsPerPage + index + 1;
                         switch (col) {
                           case 'S.No': content = serialNumber; break;
                           case 'Item Code':
@@ -603,11 +777,6 @@ export const PriceList = () => {
                         return (
                           <TableCell
                             key={col}
-                            component={motion.td}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 10 }}
-                            transition={{ duration: 0.25, ease: 'easeOut' }}
                             sx={{
                               whiteSpace: 'nowrap',
                               minWidth: col === 'Price' ? 120 : 'auto',
@@ -618,9 +787,9 @@ export const PriceList = () => {
                           </TableCell>
                         );
                       })}
-                    </AnimatePresence>
-                  </TableRow>
-                ))}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
@@ -681,130 +850,23 @@ export const PriceList = () => {
         )}
       </Paper>
 
-      {/* Price History Dropdown (Popover Replacement) */}
-      <Popover
-        open={isPriceHistoryOpen}
+
+      <PriceHistoryPopover
         anchorEl={priceHistoryAnchorEl}
         onClose={handlePriceHistoryClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        PaperProps={{
-          sx: {
-            mt: 1,
-            width: 320,
-            maxHeight: 480,
-            borderRadius: 3,
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
-            overflow: 'hidden'
-          }
-        }}
-      >
-        <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'grey.100', bgcolor: '#f8fafc' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Version History</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>{selectedCustomer} Revisions</Typography>
-        </Box>
+        groupedVersions={groupedVersions}
+        expandedYears={expandedYears}
+        expandedMonths={expandedMonths}
+        toggleYear={toggleYear}
+        toggleMonth={toggleMonth}
+        selectedVersionId={selectedVersionId}
+        setSelectedVersionId={setSelectedVersionId}
+      />
 
-        <Box sx={{ p: 1, overflow: 'auto', maxHeight: 380 }}>
-          <Stack spacing={0.5}>
-            {Object.entries(groupedVersions).sort((a, b) => Number(b[0]) - Number(a[0])).map(([year, months]) => (
-              <Box key={year} sx={{ mb: 0.5 }}>
-                <Button
-                  fullWidth
-                  size="small"
-                  onClick={() => toggleYear(Number(year))}
-                  endIcon={<ChevronDown size={14} style={{ transform: expandedYears.includes(Number(year)) ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />}
-                  sx={{
-                    justifyContent: 'space-between',
-                    px: 1.5,
-                    py: 1,
-                    color: 'text.primary',
-                    fontWeight: 700,
-                    fontSize: '0.75rem',
-                    '&:hover': { bgcolor: 'grey.50' }
-                  }}
-                >
-                  {year}
-                </Button>
-                <AnimatePresence>
-                  {expandedYears.includes(Number(year)) && (
-                    <Box component={motion.div} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} sx={{ overflow: 'hidden', ml: 1 }}>
-                      {Object.entries(months).sort((a, b) => {
-                        const monthsOrder = ['December', 'November', 'October', 'September', 'August', 'July', 'June', 'May', 'April', 'March', 'February', 'January'];
-                        return monthsOrder.indexOf(a[0]) - monthsOrder.indexOf(b[0]);
-                      }).map(([month, monthVersions]) => {
-                        const monthKey = `${year}-${month}`;
-                        return (
-                          <Box key={month}>
-                            <Button
-                              fullWidth
-                              size="small"
-                              onClick={() => toggleMonth(monthKey)}
-                              endIcon={<ChevronDown size={12} style={{ transform: expandedMonths.includes(monthKey) ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />}
-                              sx={{
-                                justifyContent: 'space-between',
-                                px: 1.5,
-                                py: 0.5,
-                                color: 'text.secondary',
-                                fontWeight: 600,
-                                fontSize: '0.7rem',
-                                '&:hover': { bgcolor: 'transparent', color: 'text.primary' }
-                              }}
-                            >
-                              {month}
-                            </Button>
-                            <AnimatePresence>
-                              {expandedMonths.includes(monthKey) && (
-                                <Stack component={motion.div} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} sx={{ overflow: 'hidden', ml: 1.5, mb: 1 }}>
-                                  {monthVersions.map((v) => (
-                                    <Button
-                                      key={v.id}
-                                      fullWidth
-                                      size="small"
-                                      onClick={() => {
-                                        setSelectedVersionId(v.id);
-                                        handlePriceHistoryClose();
-                                      }}
-                                      sx={{
-                                        justifyContent: 'flex-start',
-                                        px: 1.5,
-                                        py: 1,
-                                        borderRadius: 1,
-                                        bgcolor: selectedVersionId === v.id ? alpha('#0d9488', 0.1) : 'transparent',
-                                        color: selectedVersionId === v.id ? '#0d9488' : 'text.primary',
-                                        '&:hover': { bgcolor: alpha('#0d9488', 0.05) },
-                                        textAlign: 'left'
-                                      }}
-                                    >
-                                      <Box>
-                                        <Typography variant="caption" sx={{ display: 'block', fontWeight: 800 }}>
-                                          {v.id.toUpperCase()}
-                                        </Typography>
-                                        <Typography variant="caption" sx={{ fontSize: '0.6rem', opacity: 0.7 }}>
-                                          {v.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                        </Typography>
-                                      </Box>
-                                    </Button>
-                                  ))}
-                                </Stack>
-                              )}
-                            </AnimatePresence>
-                          </Box>
-                        );
-                      })}
-                    </Box>
-                  )}
-                </AnimatePresence>
-              </Box>
-            ))}
-          </Stack>
-        </Box>
-      </Popover>
+      <MaterialWeightsDialog
+        open={materialWeightsOpen}
+        onClose={() => setMaterialWeightsOpen(false)}
+      />
     </Box>
   );
 };
