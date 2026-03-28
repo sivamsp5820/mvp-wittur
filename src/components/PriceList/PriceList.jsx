@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { ChevronDown, Search, Download, Upload, MoreHorizontal, Info, Loader2, GripVertical, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, Search, Download, Upload, MoreHorizontal, Plus, Info, Loader2, GripVertical, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Box,
@@ -31,7 +31,8 @@ import {
   useTheme,
   Dialog,
   DialogContent,
-  DialogTitle
+  DialogTitle,
+  DialogActions
 } from '@mui/material';
 
 import {
@@ -76,6 +77,11 @@ export const PriceList = () => {
   const [negVarianceThreshold, setNegVarianceThreshold] = useState('0');
   const [viewType, setViewType] = useState('rm');
 
+  // New states for Add Column Dialog
+  const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
+  const [newColumnCount, setNewColumnCount] = useState('');
+  const [newColumnNames, setNewColumnNames] = useState([]);
+
   // Editable Index State
   const [newIndexDate, setNewIndexDate] = useState('2026-01-01');
   const [newIndexPrices, setNewIndexPrices] = useState(MITSUBISHI_DEFAULT_NEW_INDEX);
@@ -99,36 +105,53 @@ export const PriceList = () => {
     localStorage.setItem('mitsubishi_dynamic_values', JSON.stringify(dynamicValues));
   }, [dynamicValues]);
 
-  const addDynamicColumn = useCallback(() => {
-    const countStr = prompt('How many adjacent columns would you like to add?', '1');
-    if (!countStr) return;
+  const handleAddColumnClick = () => {
+    setNewColumnCount('');
+    setNewColumnNames([]);
+    setIsAddColumnDialogOpen(true);
+  };
 
-    const count = parseInt(countStr);
-    if (isNaN(count) || count <= 0) {
-      alert('Please enter a valid number.');
+  const handleColumnCountChange = (val) => {
+    setNewColumnCount(val);
+    const count = parseInt(val);
+    if (!isNaN(count) && count > 0) {
+      setNewColumnNames(Array(count).fill('').map((_, i) => `Adj Column ${dynamicColumns.length + i + 1}`));
+    } else {
+      setNewColumnNames([]);
+    }
+  };
+
+  const handleColumnNameChange = (index, value) => {
+    const updated = [...newColumnNames];
+    updated[index] = value;
+    setNewColumnNames(updated);
+  };
+
+  const submitNewColumns = () => {
+    const count = parseInt(newColumnCount);
+    if (isNaN(count) || count <= 0) return;
+    
+    // Validate all names are filled
+    if (newColumnNames.some(name => !name.trim())) {
+      alert('Please fill all column names.');
       return;
     }
 
-    const newCols = [];
     const timestamp = Date.now();
-    for (let i = 0; i < count; i++) {
-      const colIndex = dynamicColumns.length + i + 1;
-      const name = prompt(`Enter name for column ${i + 1}:`, `Adj Column ${colIndex}`);
+    const newCols = newColumnNames.map((name, i) => ({
+      id: `dyn_${timestamp}_${i}`,
+      name: name.trim(),
+      type: 'add'
+    }));
 
-      // If user cancels at any point, we stop and add what we have so far
-      if (name === null) break;
+    setDynamicColumns(prev => [...prev, ...newCols]);
+    setIsAddColumnDialogOpen(false);
+  };
 
-      newCols.push({
-        id: `dyn_${timestamp}_${i}`,
-        name: name || `Adj Column ${colIndex}`,
-        type: 'add'
-      });
-    }
-
-    if (newCols.length > 0) {
-      setDynamicColumns(prev => [...prev, ...newCols]);
-    }
-  }, [dynamicColumns]);
+  const addDynamicColumn = useCallback(() => {
+    // This function is now superseded by the Dialog flow
+    handleAddColumnClick();
+  }, []);
 
 
 
@@ -220,9 +243,9 @@ export const PriceList = () => {
     <TableCell key="rev" sx={mitsubishiHeaderStyle}>Revised Price for Q4 2025</TableCell>,
     <TableCell key="rm" sx={mitsubishiHeaderStyle}>RM Price movement</TableCell>,
     <TableCell key="add" sx={{ ...mitsubishiHeaderStyle, width: 50, p: 0, textAlign: 'center' }}>
-      <Tooltip title="Add adjustment column">
-        <IconButton size="small" onClick={addDynamicColumn} sx={{ color: 'primary.main' }}>
-          <MoreHorizontal size={16} />
+      <Tooltip title="Add adjustment columns">
+        <IconButton size="small" onClick={handleAddColumnClick} sx={{ color: 'primary.main', border: '1px dashed', borderColor: 'primary.main', borderRadius: 1.5 }}>
+          <Plus size={16} />
         </IconButton>
       </Tooltip>
     </TableCell>,
@@ -908,6 +931,75 @@ export const PriceList = () => {
         open={materialWeightsOpen}
         onClose={() => setMaterialWeightsOpen(false)}
       />
+
+      {/* Add Adjacent Column Dialog */}
+      <Dialog 
+        open={isAddColumnDialogOpen} 
+        onClose={() => setIsAddColumnDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3, p: 1 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', pb: 1 }}>
+          Add Adjacent Columns
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1, display: 'block' }}>
+            Enter the number of columns you want to add, then provide names for each.
+          </Typography>
+          
+          <TextField
+            fullWidth
+            label="Price Impact Values Field Count"
+            type="number"
+            value={newColumnCount}
+            onChange={(e) => handleColumnCountChange(e.target.value)}
+            size="small"
+            sx={{ mt: 2, mb: 3 }}
+            autoFocus
+          />
+
+          <AnimatePresence>
+            {newColumnNames.length > 0 && (
+              <Box component={motion.div} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} sx={{ mt: 1 }}>
+                <Divider sx={{ mb: 2 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled' }}>Column Names</Typography>
+                </Divider>
+                <Stack spacing={2} sx={{ maxHeight: 300, overflow: 'auto', px: 0.5, py: 1 }}>
+                  {newColumnNames.map((name, index) => (
+                    <TextField
+                      key={index}
+                      fullWidth
+                      label={`Column Name ${index + 1}`}
+                      variant="outlined"
+                      size="small"
+                      value={name}
+                      onChange={(e) => handleColumnNameChange(index, e.target.value)}
+                      required
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </AnimatePresence>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setIsAddColumnDialogOpen(false)} sx={{ fontWeight: 700, color: 'text.secondary' }}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={submitNewColumns} 
+            variant="contained" 
+            disableElevation
+            disabled={!newColumnCount || newColumnNames.some(n => !n.trim())}
+            sx={{ fontWeight: 700, borderRadius: 2 }}
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
