@@ -86,28 +86,18 @@ const MitsubishiTable = ({
               </TableCell>
               <TableCell colSpan={2} align="center">
                 <Stack spacing={0.5} sx={{ px: 1 }}>
-                  <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>+ve Threshold:</Typography>
-                    <TextField
-                      variant="outlined"
-                      size="small"
-                      value={posVarianceThreshold}
-                      onChange={(e) => setPosVarianceThreshold(e.target.value)}
-                      sx={{ width: 55, '& .MuiInputBase-input': { py: 0.2, px: 0.5, fontSize: '0.65rem', fontWeight: 800, textAlign: 'right', bgcolor: '#fff9c4' } }}
-                      InputProps={{ endAdornment: <Box component="span" sx={{ fontSize: '0.6rem', ml: 0.2 }}>%</Box> }}
-                    />
-                  </Stack>
-                  <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>-ve Threshold:</Typography>
-                    <TextField
-                      variant="outlined"
-                      size="small"
-                      value={negVarianceThreshold}
-                      onChange={(e) => setNegVarianceThreshold(e.target.value)}
-                      sx={{ width: 55, '& .MuiInputBase-input': { py: 0.2, px: 0.5, fontSize: '0.65rem', fontWeight: 800, textAlign: 'right', bgcolor: '#fff9c4' } }}
-                      InputProps={{ endAdornment: <Box component="span" sx={{ fontSize: '0.6rem', ml: 0.2 }}>%</Box> }}
-                    />
-                  </Stack>
+                   <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
+                     <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>+ve Threshold:</Typography>
+                     <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: 'text.primary', minWidth: 40, textAlign: 'right', px: 1 }}>
+                       {posVarianceThreshold}%
+                     </Typography>
+                   </Stack>
+                   <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
+                     <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>-ve Threshold:</Typography>
+                     <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: 'text.primary', minWidth: 40, textAlign: 'right', px: 1 }}>
+                       {negVarianceThreshold}%
+                     </Typography>
+                   </Stack>
                 </Stack>
               </TableCell>
             </TableRow>
