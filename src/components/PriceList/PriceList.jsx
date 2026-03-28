@@ -45,7 +45,9 @@ import {
 import MitsubishiTable from './MitsubishiTable';
 import MaterialWeightsDialog from './MaterialWeightsDialog';
 import PriceHistoryPopover from './PriceHistoryPopover';
+import EItemPriceList from './EItemPriceList';
 import mitsubishiMainData from '../../data/mitsubishiMainData.json';
+import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 
 
 export const PriceList = () => {
@@ -72,6 +74,7 @@ export const PriceList = () => {
   const [materialWeightsOpen, setMaterialWeightsOpen] = useState(false);
   const [posVarianceThreshold, setPosVarianceThreshold] = useState('0');
   const [negVarianceThreshold, setNegVarianceThreshold] = useState('0');
+  const [viewType, setViewType] = useState('rm');
 
   // Editable Index State
   const [newIndexDate, setNewIndexDate] = useState('2026-01-01');
@@ -97,25 +100,37 @@ export const PriceList = () => {
   }, [dynamicValues]);
 
   const addDynamicColumn = useCallback(() => {
-    const name = prompt('Enter new column name:');
-    if (!name) return;
-    if (dynamicColumns.some(col => col.name.toLowerCase() === name.toLowerCase())) {
-      alert('Column already exists!');
+    const countStr = prompt('How many adjacent columns would you like to add?', '1');
+    if (!countStr) return;
+
+    const count = parseInt(countStr);
+    if (isNaN(count) || count <= 0) {
+      alert('Please enter a valid number.');
       return;
     }
-    const newCol = {
-      id: `dyn_${Date.now()}`,
-      name: name,
-      type: 'add'
-    };
-    setDynamicColumns([...dynamicColumns, newCol]);
+
+    const newCols = [];
+    const timestamp = Date.now();
+    for (let i = 0; i < count; i++) {
+      const colIndex = dynamicColumns.length + i + 1;
+      const name = prompt(`Enter name for column ${i + 1}:`, `Adj Column ${colIndex}`);
+
+      // If user cancels at any point, we stop and add what we have so far
+      if (name === null) break;
+
+      newCols.push({
+        id: `dyn_${timestamp}_${i}`,
+        name: name || `Adj Column ${colIndex}`,
+        type: 'add'
+      });
+    }
+
+    if (newCols.length > 0) {
+      setDynamicColumns(prev => [...prev, ...newCols]);
+    }
   }, [dynamicColumns]);
 
-  const toggleColumnType = useCallback((colId) => {
-    setDynamicColumns(prev => prev.map(col =>
-      col.id === colId ? { ...col, type: col.type === 'add' ? 'subtract' : 'add' } : col
-    ));
-  }, []);
+
 
   const deleteColumn = useCallback((colId) => {
     if (confirm('Delete this column and all its values?')) {
@@ -215,24 +230,7 @@ export const PriceList = () => {
       <TableCell key={col.id} sx={mitsubishiHeaderStyle}>
         <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
           <Typography variant="caption" sx={{ fontWeight: 800 }}>{col.name}</Typography>
-          <Tooltip title={col.type === 'add' ? 'Switch to subtract' : 'Switch to add'}>
-            <Button
-              size="small"
-              onClick={() => toggleColumnType(col.id)}
-              sx={{
-                minWidth: 28,
-                height: 20,
-                p: 0,
-                fontSize: '0.65rem',
-                fontWeight: 900,
-                bgcolor: col.type === 'add' ? 'success.light' : 'error.light',
-                color: 'white',
-                '&:hover': { bgcolor: col.type === 'add' ? 'success.main' : 'error.main' }
-              }}
-            >
-              {col.type === 'add' ? '+' : '-'}
-            </Button>
-          </Tooltip>
+
           <IconButton size="small" onClick={() => deleteColumn(col.id)} sx={{ p: 0, color: 'text.disabled', '&:hover': { color: 'error.main' } }}>
             <X size={12} />
           </IconButton>
@@ -240,7 +238,7 @@ export const PriceList = () => {
       </TableCell>
     )),
     <TableCell key="price" sx={{ ...mitsubishiHeaderStyle, color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.05) }}>Price</TableCell>
-  ], [theme, dynamicColumns, deleteColumn, toggleColumnType, addDynamicColumn, mitsubishiHeaderStyle]);
+  ], [theme, dynamicColumns, deleteColumn, addDynamicColumn, mitsubishiHeaderStyle]);
 
   /**
    * MAP AN API CALL TO THIS TABLE:
@@ -279,7 +277,7 @@ export const PriceList = () => {
 
   const filteredData = useMemo(() => {
     if (!data || !Array.isArray(data)) return [];
-    
+
     return data.filter(item => {
       if (!item) return false;
       const code = (item.code || item.winPartNumber || '').toLowerCase();
@@ -473,7 +471,7 @@ export const PriceList = () => {
             : '0 10px 40px -10px rgba(0,0,0,0.05)'
         }}
       >
-      <Box sx={{ px: 4, py: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: alpha(theme.palette.background.default, 0.5) }}>
+        <Box sx={{ px: 4, py: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: alpha(theme.palette.background.default, 0.5) }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
               Products
@@ -491,6 +489,36 @@ export const PriceList = () => {
                 />
               </Stack>
             )}
+
+            <Divider orientation="vertical" flexItem sx={{ mx: 2, height: 24, alignSelf: 'center' }} />
+
+            <ToggleButtonGroup
+              size="small"
+              value={viewType}
+              exclusive
+              onChange={(e, val) => val && setViewType(val)}
+              sx={{
+                height: 32,
+                '& .MuiToggleButton-root': {
+                  px: 2,
+                  py: 0.5,
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  textTransform: 'none',
+                  borderRadius: 1.5,
+                  border: 'none',
+                  color: 'text.disabled',
+                  '&.Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' }
+                  }
+                }
+              }}
+            >
+              <ToggleButton value="rm">RM Impact Price</ToggleButton>
+              <ToggleButton value="eitem">E.Item Price List</ToggleButton>
+            </ToggleButtonGroup>
           </Stack>
 
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -621,9 +649,14 @@ export const PriceList = () => {
               Retry Connection
             </Button>
           </Box>
+        ) : viewType === 'eitem' ? (
+          <Box sx={{ p: 3 }}>
+            <EItemPriceList />
+          </Box>
         ) : (
           <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
             <Table stickyHeader size="small" key={selectedCustomer}>
+
               <TableHead>
                 <TableRow>
                   {selectedCustomer === 'Mitsubishi' ? mitsubishiHeadersList : (
@@ -671,8 +704,7 @@ export const PriceList = () => {
                   let finalPrice = basePrice;
                   dynamicColumns.forEach(col => {
                     const val = parseFloat(dynamicValues[item.id]?.[col.id]) || 0;
-                    if (col.type === 'add') finalPrice += val;
-                    else finalPrice -= val;
+                    finalPrice += val;
                   });
 
                   if (selectedCustomer === 'Mitsubishi') {
@@ -699,7 +731,7 @@ export const PriceList = () => {
                               width: 70,
                               '& .MuiInputBase-input': {
                                 py: 0.4, px: 0.8, fontSize: '0.75rem', fontWeight: 700, textAlign: 'center',
-                                bgcolor: alpha(col.type === 'add' ? theme.palette.success.main : theme.palette.error.main, 0.05)
+                                bgcolor: alpha(theme.palette.success.main, 0.05)
                               }
                             }}
                           />
@@ -736,7 +768,7 @@ export const PriceList = () => {
                         '& td': { py: 2, px: 3, borderBottom: '1px solid', borderColor: 'divider' }
                       }}
                     >
-                      { [...visibleColumns.filter(c => c !== 'Price'), 'Price'].map(col => {
+                      {[...visibleColumns.filter(c => c !== 'Price'), 'Price'].map(col => {
                         let content;
                         switch (col) {
                           case 'S.No': content = serialNumber; break;

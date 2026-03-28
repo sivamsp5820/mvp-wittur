@@ -43,7 +43,7 @@ const MitsubishiTable = ({
               <TableCell colSpan={3} align="center" sx={{ fontWeight: 800, color: 'text.secondary', py: 1.5 }}>Material Information</TableCell>
               <TableCell colSpan={1} align="center" sx={{ fontWeight: 800, color: 'text.secondary', py: 1.5 }}>Reference Index (10/1/2025)</TableCell>
               <TableCell colSpan={1} align="center" sx={{ fontWeight: 800, color: 'primary.dark', py: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>New Index Price</TableCell>
-              <TableCell colSpan={2} align="center" sx={{ fontWeight: 800, color: 'text.secondary', py: 1.5 }}>Calculated Variance</TableCell>
+              <TableCell colSpan={2} align="center" sx={{ fontWeight: 800, color: 'text.secondary', py: 1.5 }}>Variance</TableCell>
             </TableRow>
 
             {/* Control & Date Header */}
