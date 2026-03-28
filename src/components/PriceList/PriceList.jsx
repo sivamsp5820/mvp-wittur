@@ -130,7 +130,7 @@ export const PriceList = () => {
   const submitNewColumns = () => {
     const count = parseInt(newColumnCount);
     if (isNaN(count) || count <= 0) return;
-    
+
     // Validate all names are filled
     if (newColumnNames.some(name => !name.trim())) {
       alert('Please fill all column names.');
@@ -683,7 +683,7 @@ export const PriceList = () => {
           </Box>
         ) : (selectedCustomer === 'Mitsubishi' && viewType === 'eitem') ? (
           <Box sx={{ p: 3 }}>
-             <EItemPriceList />
+            <EItemPriceList />
           </Box>
         ) : (
           <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
@@ -933,8 +933,8 @@ export const PriceList = () => {
       />
 
       {/* Add Adjacent Column Dialog */}
-      <Dialog 
-        open={isAddColumnDialogOpen} 
+      <Dialog
+        open={isAddColumnDialogOpen}
         onClose={() => setIsAddColumnDialogOpen(false)}
         maxWidth="xs"
         fullWidth
@@ -943,13 +943,13 @@ export const PriceList = () => {
         }}
       >
         <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', pb: 1 }}>
-          Add Adjacent Columns
+          Additional Values
         </DialogTitle>
         <DialogContent>
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1, display: 'block' }}>
+          {/* <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1, display: 'block' }}>
             Enter the number of columns you want to add, then provide names for each.
-          </Typography>
-          
+          </Typography> */}
+
           <TextField
             fullWidth
             label="Price Impact Values Field Count"
@@ -989,9 +989,9 @@ export const PriceList = () => {
           <Button onClick={() => setIsAddColumnDialogOpen(false)} sx={{ fontWeight: 700, color: 'text.secondary' }}>
             Cancel
           </Button>
-          <Button 
-            onClick={submitNewColumns} 
-            variant="contained" 
+          <Button
+            onClick={submitNewColumns}
+            variant="contained"
             disableElevation
             disabled={!newColumnCount || newColumnNames.some(n => !n.trim())}
             sx={{ fontWeight: 700, borderRadius: 2 }}
