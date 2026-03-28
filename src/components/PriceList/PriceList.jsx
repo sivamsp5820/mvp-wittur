@@ -115,7 +115,7 @@ export const PriceList = () => {
     setNewColumnCount(val);
     const count = parseInt(val);
     if (!isNaN(count) && count > 0) {
-      setNewColumnNames(Array(count).fill('').map((_, i) => `Adj Column ${dynamicColumns.length + i + 1}`));
+      setNewColumnNames(Array(count).fill('').map((_, i) => `Column Name ${i + 1}`));
     } else {
       setNewColumnNames([]);
     }
