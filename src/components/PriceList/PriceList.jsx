@@ -350,6 +350,12 @@ export const PriceList = () => {
     }
   }, [versions.length]);
 
+  useEffect(() => {
+    if (selectedCustomer !== 'Mitsubishi') {
+      setViewType('rm');
+    }
+  }, [selectedCustomer]);
+
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 4, animation: 'fadeIn 0.7s ease-in-out' }}>
       {/* Header Section */}
@@ -490,35 +496,38 @@ export const PriceList = () => {
               </Stack>
             )}
 
-            <Divider orientation="vertical" flexItem sx={{ mx: 2, height: 24, alignSelf: 'center' }} />
-
-            <ToggleButtonGroup
-              size="small"
-              value={viewType}
-              exclusive
-              onChange={(e, val) => val && setViewType(val)}
-              sx={{
-                height: 32,
-                '& .MuiToggleButton-root': {
-                  px: 2,
-                  py: 0.5,
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  textTransform: 'none',
-                  borderRadius: 1.5,
-                  border: 'none',
-                  color: 'text.disabled',
-                  '&.Mui-selected': {
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' }
-                  }
-                }
-              }}
-            >
-              <ToggleButton value="rm">RM Impact Price</ToggleButton>
-              <ToggleButton value="eitem">E.Item Price List</ToggleButton>
-            </ToggleButtonGroup>
+            {selectedCustomer === 'Mitsubishi' && (
+              <>
+                <Divider orientation="vertical" flexItem sx={{ mx: 2, height: 24, alignSelf: 'center' }} />
+                <ToggleButtonGroup
+                  size="small"
+                  value={viewType}
+                  exclusive
+                  onChange={(e, val) => val && setViewType(val)}
+                  sx={{
+                    height: 32,
+                    '& .MuiToggleButton-root': {
+                      px: 2,
+                      py: 0.5,
+                      fontSize: '0.65rem',
+                      fontWeight: 800,
+                      textTransform: 'none',
+                      borderRadius: 1.5,
+                      border: 'none',
+                      color: 'text.disabled',
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': { bgcolor: 'primary.dark' }
+                      }
+                    }
+                  }}
+                >
+                  <ToggleButton value="rm">RM Impact Price</ToggleButton>
+                  <ToggleButton value="eitem">E.Item Price List</ToggleButton>
+                </ToggleButtonGroup>
+              </>
+            )}
           </Stack>
 
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -649,9 +658,9 @@ export const PriceList = () => {
               Retry Connection
             </Button>
           </Box>
-        ) : viewType === 'eitem' ? (
+        ) : (selectedCustomer === 'Mitsubishi' && viewType === 'eitem') ? (
           <Box sx={{ p: 3 }}>
-            <EItemPriceList />
+             <EItemPriceList />
           </Box>
         ) : (
           <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
