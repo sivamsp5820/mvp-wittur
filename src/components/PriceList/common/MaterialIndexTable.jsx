@@ -10,9 +10,14 @@ import {
   TextField,
   Typography,
   Stack,
+  Button,
+  CircularProgress,
+  Tooltip,
+  IconButton,
   alpha,
   useTheme
 } from '@mui/material';
+import { ChevronsLeft, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MaterialIndexTable = ({
   materialIndexes = [],
@@ -23,14 +28,31 @@ const MaterialIndexTable = ({
   handleNewIndexPriceChange,
   posVarianceThreshold,
   negVarianceThreshold,
+  isLoading,
+  isEditing,
+  onStartEdit,
+  onConfirmEdit,
+  onCancelEdit,
+  onMoveToReference,
+  historyIndex,
+  historyLength,
+  historyDate,
+  onPrevHistory,
+  onNextHistory
 }) => {
   const theme = useTheme();
 
   if (!materialIndexes || materialIndexes.length === 0) return null;
 
   return (
-    <Box sx={{ mb: 4, width: '100%', overflowX: 'auto' }}>
-      <Paper elevation={0} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+    <Box sx={{ mb: 4, width: '100%', overflowX: 'auto', position: 'relative' }}>
+      <Paper elevation={0} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid', borderColor: 'divider', minHeight: 200, position: 'relative' }}>
+        {isLoading && (
+          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(4px)', zIndex: 10 }}>
+            <CircularProgress size={32} sx={{ mb: 2 }} />
+            <Typography variant="body2" color="text.secondary">Fetching material indexes...</Typography>
+          </Box>
+        )}
         <Table size="small" sx={{ minWidth: 1100, borderCollapse: 'collapse', '& th, & td': { border: '1px solid', borderColor: 'divider' } }}>
           <TableHead>
             {/* Top Level Grouping Header */}
@@ -45,7 +67,51 @@ const MaterialIndexTable = ({
             <TableRow sx={{ bgcolor: alpha(theme.palette.background.default, 0.5) }}>
               <TableCell colSpan={3} align="center"></TableCell>
               <TableCell colSpan={1} align="center">
-                <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>Price Basis : 10/1/2025</Typography>
+                <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                  {isEditing ? (
+                    <>
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>Price Basis : 10/1/2025</Typography>
+                      <Tooltip title="Move current New Index Prices to Reference">
+                        <IconButton 
+                          size="small" 
+                          onClick={onMoveToReference} 
+                          sx={{ color: 'primary.main', border: '1px solid', borderColor: 'primary.main', p: 0.2, borderRadius: 1 }}
+                        >
+                          <ChevronsLeft size={14} />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  ) : (
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      <IconButton 
+                        size="small" 
+                        onClick={onPrevHistory} 
+                        disabled={historyIndex === 0}
+                        sx={{ p: 0.2, color: 'primary.main' }}
+                      >
+                        <ChevronLeft size={16} />
+                      </IconButton>
+                      
+                      <Box sx={{ minWidth: 140, textAlign: 'center' }}>
+                        <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.65rem' }}>
+                          {historyDate || 'Price Basis : 10/1/2025'}
+                        </Typography>
+                        <Typography variant="caption" display="block" sx={{ fontSize: '0.55rem', color: 'text.secondary', mt: -0.5 }}>
+                          History: {historyIndex + 1} / {historyLength}
+                        </Typography>
+                      </Box>
+
+                      <IconButton 
+                        size="small" 
+                        onClick={onNextHistory} 
+                        disabled={historyIndex === historyLength - 1}
+                        sx={{ p: 0.2, color: 'primary.main' }}
+                      >
+                        <ChevronRight size={16} />
+                      </IconButton>
+                    </Stack>
+                  )}
+                </Stack>
               </TableCell>
               <TableCell colSpan={1} align="center" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.02) }}>
                 <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
@@ -113,21 +179,27 @@ const MaterialIndexTable = ({
                     </Stack>
                   </TableCell>
                   <TableCell align="center" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.01) }}>
-                    <TextField
-                      variant="outlined"
-                      size="small"
-                      value={newIndexPrices[idx]?.price || ''}
-                      onChange={(e) => handleNewIndexPriceChange(idx, 'price', e.target.value)}
-                      sx={{
-                        width: 90,
-                        '& .MuiOutlinedInput-root': {
-                          fontSize: '0.8rem', fontWeight: 800, bgcolor: 'background.paper', color: 'primary.main',
-                          '& fieldset': { borderColor: alpha(theme.palette.primary.main, 0.2) },
-                          '&:hover fieldset': { borderColor: 'primary.main' }
-                        },
-                        '& .MuiInputBase-input': { py: 0.5, px: 1, textAlign: 'center' }
-                      }}
-                    />
+                    {isEditing ? (
+                      <TextField
+                        variant="outlined"
+                        size="small"
+                        value={newIndexPrices[idx]?.price || ''}
+                        onChange={(e) => handleNewIndexPriceChange(idx, 'price', e.target.value)}
+                        sx={{
+                          width: 90,
+                          '& .MuiOutlinedInput-root': {
+                            fontSize: '0.8rem', fontWeight: 800, bgcolor: 'background.paper', color: 'primary.main',
+                            '& fieldset': { borderColor: alpha(theme.palette.primary.main, 0.2) },
+                            '&:hover fieldset': { borderColor: 'primary.main' }
+                          },
+                          '& .MuiInputBase-input': { py: 0.5, px: 1, textAlign: 'center' }
+                        }}
+                      />
+                    ) : (
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                        ₹ {newIndexPrices[idx]?.price || '0'}
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" justifyContent="space-between" sx={{ width: '65px', ml: 'auto' }}>

@@ -1,6 +1,7 @@
 {
   "headers": [
     "Sno",
+    "Item Code",
     "Clear Opening",
     "Clear Height",
     "Door Type",
@@ -15,6 +16,7 @@
     {
       "id": "o1",
       "sno": 1,
+      "itemCode": "OTIS-001",
       "co": "700mm",
       "ch": "2000mm",
       "doorType": "Telescopic",
@@ -27,6 +29,7 @@
     {
       "id": "o2",
       "sno": 2,
+      "itemCode": "OTIS-002",
       "co": "700mm",
       "ch": "2000mm",
       "doorType": "Center Opening",
@@ -39,6 +42,7 @@
     {
       "id": "o3",
       "sno": 3,
+      "itemCode": "OTIS-003",
       "co": "700mm",
       "ch": "2000mm",
       "doorType": "Telescopic",
@@ -51,6 +55,7 @@
     {
       "id": "o4",
       "sno": 4,
+      "itemCode": "OTIS-004",
       "co": "800mm",
       "ch": "2000mm",
       "doorType": "Center Opening",

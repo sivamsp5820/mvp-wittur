@@ -20,12 +20,12 @@ import { Plus, X } from 'lucide-react';
 
 import AddColumnDialog from '../common/AddColumnDialog';
 
-const OtisMainTable = ({ 
-  data, 
-  searchTerm, 
-  page, 
+const OtisMainTable = ({
+  data,
+  searchTerm,
+  page,
   rowsPerPage,
-  selectedVersion 
+  selectedVersion
 }) => {
   const theme = useTheme();
 
@@ -90,12 +90,12 @@ const OtisMainTable = ({
   // Logic: Insert dynamic columns between Revised Price and Final Price
   const headers = useMemo(() => {
     if (!data || !data.headers) return [];
-    
+
     // Split headers at "Final Price"
     const baseHeaders = data.headers.filter(h => h !== "Final Price");
     // Find index of "Revised Price..." 
     const revIdx = baseHeaders.findIndex(h => h.includes("Revised Price"));
-    
+
     const finalHeaders = [...baseHeaders];
     // Dynamic columns go after Revised Price
     // But the user requested a "+" button specifically BEFORE the Final Price column.
@@ -104,10 +104,11 @@ const OtisMainTable = ({
 
   const filteredRows = useMemo(() => {
     if (!data || !data.rows) return [];
-    
+
     return data.rows.filter(item => {
       const search = searchTerm.toLowerCase();
       return (
+        item.itemCode?.toLowerCase().includes(search) ||
         item.finishCode?.toLowerCase().includes(search) ||
         item.doorType?.toLowerCase().includes(search) ||
         item.id?.toLowerCase().includes(search)
@@ -144,6 +145,7 @@ const OtisMainTable = ({
           <TableRow>
             {/* Header sequence according to request */}
             <TableCell sx={otisHeaderStyle}>Sno</TableCell>
+            <TableCell sx={otisHeaderStyle}>Item Code</TableCell>
             <TableCell sx={otisHeaderStyle}>Clear Opening</TableCell>
             <TableCell sx={otisHeaderStyle}>Clear Height</TableCell>
             <TableCell sx={otisHeaderStyle}>Door Type</TableCell>
@@ -152,7 +154,7 @@ const OtisMainTable = ({
             <TableCell sx={otisHeaderStyle}>Toeguard</TableCell>
             <TableCell sx={otisHeaderStyle}>Finish Code</TableCell>
             <TableCell sx={otisHeaderStyle}>Revised Price from 1st July 2025 to 31st Dec 2025</TableCell>
-            
+
             {/* Adjacent Columns (Dynamic) */}
             {adjacentColumns.map(col => (
               <TableCell key={col.id} sx={otisHeaderStyle}>
@@ -166,9 +168,9 @@ const OtisMainTable = ({
             ))}
 
             {/* Final Price Column with + Button */}
-            <TableCell sx={{ 
-              ...otisHeaderStyle, 
-              color: 'primary.main', 
+            <TableCell sx={{
+              ...otisHeaderStyle,
+              color: 'primary.main',
               bgcolor: alpha(theme.palette.primary.main, 0.05),
               position: 'relative'
             }}>
@@ -177,13 +179,13 @@ const OtisMainTable = ({
                 {/* We'll put it slightly inside the header or maybe as a separate column. 
                     Let's put it as a tooltip icon next to Final Price header for better UI. */}
                 <Tooltip title="Add Adjacent Columns">
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={handleAddAdjacentClick}
-                    sx={{ 
-                      mr: 1, 
-                      color: 'primary.main', 
-                      border: '1px dashed', 
+                    sx={{
+                      mr: 1,
+                      color: 'primary.main',
+                      border: '1px dashed',
                       borderColor: 'primary.main',
                       borderRadius: 1.5,
                       p: 0.2
@@ -200,7 +202,7 @@ const OtisMainTable = ({
         <TableBody>
           {paginatedRows.map((row) => {
             const basePrice = row.revisedPrice || 0;
-            
+
             // Calculate final price: Revised Price + sum of dynamic columns
             let finalPrice = basePrice;
             adjacentColumns.forEach(col => {
@@ -211,6 +213,7 @@ const OtisMainTable = ({
             return (
               <TableRow key={row.id} hover sx={{ '& td': { py: 1.5, px: 2, borderBottom: '1px solid', borderColor: 'divider' } }}>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.sno}</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{row.itemCode}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.co}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.ch}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.doorType}</Typography></TableCell>
@@ -219,7 +222,7 @@ const OtisMainTable = ({
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.toeguard}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.finishCode}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>₹ {basePrice.toLocaleString()}</Typography></TableCell>
-                
+
                 {/* Dynamic adjacent cells */}
                 {adjacentColumns.map(col => (
                   <TableCell key={col.id} align="center">

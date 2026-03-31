@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { ChevronDown, Search, Download, Upload, MoreHorizontal, Plus, Info, Loader2, GripVertical, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, Search, Download, Upload, MoreHorizontal, Plus, Info, Loader2, GripVertical, ChevronRight, SlidersHorizontal, X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Box,
@@ -33,7 +33,7 @@ import {
   DialogContent,
   DialogTitle,
   DialogActions,
-  ToggleButton, 
+  ToggleButton,
   ToggleButtonGroup
 } from '@mui/material';
 
@@ -93,6 +93,18 @@ export const PriceList = () => {
   const [newIndexDate, setNewIndexDate] = useState('2026-01-01');
   const [newIndexPrices, setNewIndexPrices] = useState(MITSUBISHI_DEFAULT_NEW_INDEX);
 
+  // New Edit Mode States
+  const [currentReferencePrices, setCurrentReferencePrices] = useState(MITSUBISHI_REFERENCE_INDEX);
+  const [isEditingMaterialPrices, setIsEditingMaterialPrices] = useState(false);
+  const [draftNewIndexPrices, setDraftNewIndexPrices] = useState([]);
+  const [draftReferencePrices, setDraftReferencePrices] = useState([]);
+
+  // Material Price History
+  const [materialPriceHistory, setMaterialPriceHistory] = useState([
+    { date: 'Purchase Price 2025', prices: MITSUBISHI_REFERENCE_INDEX }
+  ]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+
   // --- DYNAMIC COLUMNS ---
   const [dynamicColumns, setDynamicColumns] = useState([]);
   const [dynamicValues, setDynamicValues] = useState({});
@@ -100,7 +112,15 @@ export const PriceList = () => {
   useEffect(() => {
     // Set default values based on customer
     const defaultPrices = selectedCustomer === 'Otis' ? OTIS_DEFAULT_NEW_INDEX : MITSUBISHI_DEFAULT_NEW_INDEX;
+    const defaultRefs = selectedCustomer === 'Otis' ? OTIS_REFERENCE_INDEX : MITSUBISHI_REFERENCE_INDEX;
     setNewIndexPrices(defaultPrices);
+    setCurrentReferencePrices(defaultRefs);
+    setIsEditingMaterialPrices(false);
+
+    // Initial history entry
+    const initialLabel = selectedCustomer === 'Otis' ? 'Purchase price July 2025' : 'Purchase price Oct 2025';
+    setMaterialPriceHistory([{ date: initialLabel, prices: defaultRefs }]);
+    setHistoryIndex(0);
 
     if (selectedCustomer === 'Otis') {
       setPosVarianceThreshold('5');
@@ -168,15 +188,74 @@ export const PriceList = () => {
     }));
   }, []);
 
-  const handleNewIndexPriceChange = useCallback((index, field, value) => {
-    setNewIndexPrices(prev => {
-      const updated = [...prev];
-      if (updated[index]) {
-        updated[index] = { ...updated[index], [field]: value };
-      }
-      return updated;
+  // Material Table Edit Handlers
+  const handleStartEditMaterialPrices = useCallback(() => {
+    // Automatically move current New Index Prices to the Reference column for the new update
+    setDraftReferencePrices([...newIndexPrices]);
+    // Clear out the New Index inputs for the new entry as requested
+    setDraftNewIndexPrices(newIndexPrices.map(item => ({ ...item, price: '' })));
+    // Set the date to today's date for the new update
+    setNewIndexDate(new Date().toISOString().split('T')[0]);
+
+    setIsEditingMaterialPrices(true);
+  }, [newIndexPrices]);
+
+  const handleConfirmEditMaterialPrices = useCallback(() => {
+    // 1. Add the PREVIOUS New Index Prices to history before they are replaced.
+    // This previously set value (e.g. 100) now becomes the "Reference" (baseline) for the new value (e.g. 1584).
+    setMaterialPriceHistory(prev => {
+      const historicalEntry = {
+        date: `Update ${new Date().toLocaleDateString()}`,
+        prices: [...newIndexPrices]
+      };
+      const newHistory = [...prev, historicalEntry];
+      setHistoryIndex(newHistory.length - 1); // Point to the entry we just archived (100)
+      return newHistory;
     });
+
+    // 2. Save the newly typed draft prices (1584) as the current New Index Prices.
+    setNewIndexPrices(draftNewIndexPrices);
+    setCurrentReferencePrices(draftReferencePrices); // Sync current ref (optional but safe)
+
+    setIsEditingMaterialPrices(false);
+  }, [draftNewIndexPrices, draftReferencePrices, newIndexPrices]);
+
+  const handleCancelEditMaterialPrices = useCallback(() => {
+    setIsEditingMaterialPrices(false);
   }, []);
+
+  const handlePrevHistory = useCallback(() => {
+    setHistoryIndex(prev => Math.max(0, prev - 1));
+  }, []);
+
+  const handleNextHistory = useCallback(() => {
+    setHistoryIndex(prev => Math.min(materialPriceHistory.length - 1, prev + 1));
+  }, [materialPriceHistory.length]);
+
+  const handleMoveToReference = useCallback(() => {
+    // Moves the 'previous' (saved) new prices into the reference prices.
+    setDraftReferencePrices([...newIndexPrices]);
+  }, [newIndexPrices]);
+
+  const handleNewIndexPriceChange = useCallback((index, field, value) => {
+    if (isEditingMaterialPrices) {
+      setDraftNewIndexPrices(prev => {
+        const updated = [...prev];
+        if (updated[index]) {
+          updated[index] = { ...updated[index], [field]: value };
+        }
+        return updated;
+      });
+    } else {
+      setNewIndexPrices(prev => {
+        const updated = [...prev];
+        if (updated[index]) {
+          updated[index] = { ...updated[index], [field]: value };
+        }
+        return updated;
+      });
+    }
+  }, [isEditingMaterialPrices]);
 
   const handleColumnPickerClick = (event) => {
     setColumnPickerAnchorEl(event.currentTarget);
@@ -392,20 +471,84 @@ export const PriceList = () => {
             </Select>
           </FormControl>
 
-          <TextField
-            size="small"
-            placeholder="Search item code..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={18} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ bgcolor: 'background.paper', borderRadius: 2, width: { xs: '100%', md: 260 } }}
-          />
+          {(selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') && (
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => setMaterialWeightsOpen(true)}
+                sx={{
+                  bgcolor: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  px: 2,
+                  height: 40,
+                  textTransform: 'none',
+                  borderRadius: 2
+                }}
+              >
+                Show Material Weight Calculation
+              </Button>
+
+              {!isEditingMaterialPrices ? (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleStartEditMaterialPrices}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    px: 2,
+                    height: 40,
+                    borderRadius: 2
+                  }}
+                >
+                  Add New Index Price
+                </Button>
+              ) : (
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={handleConfirmEditMaterialPrices}
+                    startIcon={<Check size={14} />}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      height: 40,
+                      borderRadius: 2,
+                      px: 2
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    onClick={handleCancelEditMaterialPrices}
+                    startIcon={<X size={14} />}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      height: 40,
+                      borderRadius: 2,
+                      px: 2
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Stack>
+              )}
+            </Stack>
+          )}
 
           {selectedCustomer === 'Independent' && (
             <>
@@ -441,13 +584,24 @@ export const PriceList = () => {
       {/* Universal Material Index Table (Above Table) */}
       <MaterialIndexTable
         materialIndexes={selectedCustomer === 'Otis' ? OTIS_MATERIAL_INDEXES : MITSUBISHI_MATERIAL_INDEXES}
-        referenceIndexes={selectedCustomer === 'Otis' ? OTIS_REFERENCE_INDEX : MITSUBISHI_REFERENCE_INDEX}
+        referenceIndexes={isEditingMaterialPrices ? draftReferencePrices : materialPriceHistory[historyIndex].prices}
         newIndexDate={newIndexDate}
         setNewIndexDate={setNewIndexDate}
-        newIndexPrices={newIndexPrices}
+        newIndexPrices={isEditingMaterialPrices ? draftNewIndexPrices : newIndexPrices}
         handleNewIndexPriceChange={handleNewIndexPriceChange}
         posVarianceThreshold={posVarianceThreshold}
         negVarianceThreshold={negVarianceThreshold}
+        isLoading={isLoading}
+        isEditing={isEditingMaterialPrices}
+        onStartEdit={handleStartEditMaterialPrices}
+        onConfirmEdit={handleConfirmEditMaterialPrices}
+        onCancelEdit={handleCancelEditMaterialPrices}
+        onMoveToReference={handleMoveToReference}
+        historyIndex={historyIndex}
+        historyLength={materialPriceHistory.length}
+        historyDate={materialPriceHistory[historyIndex].date}
+        onPrevHistory={handlePrevHistory}
+        onNextHistory={handleNextHistory}
       />
 
       {/* Table Container */}
@@ -519,6 +673,29 @@ export const PriceList = () => {
           </Stack>
 
           <Stack direction="row" spacing={1.5} alignItems="center">
+            <TextField
+              size="small"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={16} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 1.5,
+                width: 220,
+                '& .MuiInputBase-root': {
+                  fontSize: '0.75rem',
+                  height: 32
+                }
+              }}
+            />
+
             <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 1 }}>
               <AnimatePresence>
                 {showColumnCount && (
@@ -651,7 +828,7 @@ export const PriceList = () => {
             <EItemPriceList />
           </Box>
         ) : selectedCustomer === 'Otis' ? (
-          <OtisMainTable 
+          <OtisMainTable
             data={otisMainData}
             searchTerm={searchTerm}
             page={page}
@@ -902,6 +1079,7 @@ export const PriceList = () => {
       <MaterialWeightsDialog
         open={materialWeightsOpen}
         onClose={() => setMaterialWeightsOpen(false)}
+        selectedCustomer={selectedCustomer}
       />
 
       <AddColumnDialog
