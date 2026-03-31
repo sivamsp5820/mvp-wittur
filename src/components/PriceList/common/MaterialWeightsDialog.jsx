@@ -12,7 +12,7 @@ import {
   TableCell,
   TableBody
 } from '@mui/material';
-import { CENTER_OPENING_WEIGHTS, TELESCOPIC_OPENING_WEIGHTS } from '../../data/mockPriceListData';
+import { CENTER_OPENING_WEIGHTS, TELESCOPIC_OPENING_WEIGHTS } from '../../../data/mockPriceListData';
 
 const MaterialWeightsDialog = ({ open, onClose }) => {
   return (

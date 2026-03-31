@@ -9,16 +9,14 @@ import {
   TableRow,
   TextField,
   Typography,
-  Button,
   Stack,
   alpha,
   useTheme
 } from '@mui/material';
-import { Info } from 'lucide-react';
 import {
   MITSUBISHI_MATERIAL_INDEXES,
   MITSUBISHI_REFERENCE_INDEX
-} from '../../data/mockPriceListData';
+} from '../../../data/mockPriceListData';
 
 const MitsubishiTable = ({
   newIndexDate,
@@ -26,10 +24,7 @@ const MitsubishiTable = ({
   newIndexPrices,
   handleNewIndexPriceChange,
   posVarianceThreshold,
-  setPosVarianceThreshold,
   negVarianceThreshold,
-  setNegVarianceThreshold,
-  onShowWeights
 }) => {
   const theme = useTheme();
 
@@ -48,23 +43,7 @@ const MitsubishiTable = ({
 
             {/* Control & Date Header */}
             <TableRow sx={{ bgcolor: alpha(theme.palette.background.default, 0.5) }}>
-              <TableCell colSpan={3} align="center">
-                {/* <Button 
-                  size="small" 
-                  variant="contained" 
-                  startIcon={<Info size={14} />}
-                  onClick={onShowWeights}
-                  sx={{ 
-                    bgcolor: '#1b5e20', 
-                    '&:hover': { bgcolor: '#154a19' }, 
-                    fontSize: '0.7rem', 
-                    borderRadius: 1, 
-                    fontWeight: 700 
-                  }}
-                >
-                  Show Material Weights
-                </Button> */}
-              </TableCell>
+              <TableCell colSpan={3} align="center"></TableCell>
               <TableCell colSpan={1} align="center">
                 <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>Price Basis: Oct 2025</Typography>
               </TableCell>

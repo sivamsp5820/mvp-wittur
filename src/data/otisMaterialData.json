@@ -1,0 +1,17 @@
+{
+  "materials": [
+    { "finish": "Painted", "material": "MSPC", "type": "1.0 mm" },
+    { "finish": "#4", "material": "SS430", "type": "0.5 mm" },
+    { "finish": "#4", "material": "SS430", "type": "1.0 mm" }
+  ],
+  "referencePrices": [
+    { "price": "67.00", "desc": "Oct 2025 Purchase price" },
+    { "price": "190.00", "desc": "Oct 2025 Purchase price" },
+    { "price": "170.00", "desc": "Oct 2025 Purchase price" }
+  ],
+  "defaultNewPrices": [
+    { "price": "66.50", "desc": "Jan 2026 Purchase price" },
+    { "price": "190.00", "desc": "Jan 2026 Purchase price" },
+    { "price": "170.00", "desc": "Jan 2026 Purchase price" }
+  ]
+}

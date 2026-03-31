@@ -20,6 +20,7 @@ import {
   TableRow,
   Stack,
   alpha,
+  useTheme,
   Tooltip,
   Divider,
   FormControl,
@@ -28,11 +29,12 @@ import {
   Popover,
   Grow,
   Pagination,
-  useTheme,
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogActions
+  DialogActions,
+  ToggleButton, 
+  ToggleButtonGroup
 } from '@mui/material';
 
 import {
@@ -40,15 +42,22 @@ import {
   COLUMNS,
   PINNED_COLUMNS,
   MOCK_PRICING_DATA,
+  MITSUBISHI_MATERIAL_INDEXES,
+  MITSUBISHI_REFERENCE_INDEX,
   MITSUBISHI_DEFAULT_NEW_INDEX,
+  OTIS_MATERIAL_INDEXES,
+  OTIS_REFERENCE_INDEX,
+  OTIS_DEFAULT_NEW_INDEX,
   getMockVersions
 } from '../../data/mockPriceListData';
-import MitsubishiTable from './MitsubishiTable';
-import MaterialWeightsDialog from './MaterialWeightsDialog';
-import PriceHistoryPopover from './PriceHistoryPopover';
-import EItemPriceList from './EItemPriceList';
+import MaterialIndexTable from './common/MaterialIndexTable';
+import MaterialWeightsDialog from './common/MaterialWeightsDialog';
+import PriceHistoryPopover from './common/PriceHistoryPopover';
+import EItemPriceList from './common/EItemPriceList';
+import AddColumnDialog from './common/AddColumnDialog';
+import OtisMainTable from './otis/OtisMainTable';
 import mitsubishiMainData from '../../data/mitsubishiMainData.json';
-import { ToggleButton, ToggleButtonGroup } from '@mui/material';
+import otisMainData from '../../data/otisMainData.json';
 
 
 export const PriceList = () => {
@@ -79,81 +88,58 @@ export const PriceList = () => {
 
   // New states for Add Column Dialog
   const [isAddColumnDialogOpen, setIsAddColumnDialogOpen] = useState(false);
-  const [newColumnCount, setNewColumnCount] = useState('');
-  const [newColumnNames, setNewColumnNames] = useState([]);
 
   // Editable Index State
   const [newIndexDate, setNewIndexDate] = useState('2026-01-01');
   const [newIndexPrices, setNewIndexPrices] = useState(MITSUBISHI_DEFAULT_NEW_INDEX);
 
-  // --- DYNAMIC COLUMNS (Mitsubishi Main Table) ---
-  const [dynamicColumns, setDynamicColumns] = useState(() => {
-    const saved = localStorage.getItem('mitsubishi_dynamic_columns');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [dynamicValues, setDynamicValues] = useState(() => {
-    const saved = localStorage.getItem('mitsubishi_dynamic_values');
-    return saved ? JSON.parse(saved) : {};
-  });
+  // --- DYNAMIC COLUMNS ---
+  const [dynamicColumns, setDynamicColumns] = useState([]);
+  const [dynamicValues, setDynamicValues] = useState({});
 
   useEffect(() => {
-    localStorage.setItem('mitsubishi_dynamic_columns', JSON.stringify(dynamicColumns));
-  }, [dynamicColumns]);
+    // Set default values based on customer
+    const defaultPrices = selectedCustomer === 'Otis' ? OTIS_DEFAULT_NEW_INDEX : MITSUBISHI_DEFAULT_NEW_INDEX;
+    setNewIndexPrices(defaultPrices);
+
+    if (selectedCustomer === 'Otis') {
+      setPosVarianceThreshold('5');
+      setNegVarianceThreshold('5');
+    } else {
+      setPosVarianceThreshold('0');
+      setNegVarianceThreshold('0');
+    }
+
+    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+      const savedCols = localStorage.getItem(`${selectedCustomer.toLowerCase()}_dynamic_columns`);
+      const savedVals = localStorage.getItem(`${selectedCustomer.toLowerCase()}_dynamic_values`);
+      setDynamicColumns(savedCols ? JSON.parse(savedCols) : []);
+      setDynamicValues(savedVals ? JSON.parse(savedVals) : {});
+    } else {
+      setDynamicColumns([]);
+      setDynamicValues({});
+    }
+  }, [selectedCustomer]);
 
   useEffect(() => {
-    localStorage.setItem('mitsubishi_dynamic_values', JSON.stringify(dynamicValues));
-  }, [dynamicValues]);
+    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+      localStorage.setItem(`${selectedCustomer.toLowerCase()}_dynamic_columns`, JSON.stringify(dynamicColumns));
+    }
+  }, [dynamicColumns, selectedCustomer]);
+
+  useEffect(() => {
+    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+      localStorage.setItem(`${selectedCustomer.toLowerCase()}_dynamic_values`, JSON.stringify(dynamicValues));
+    }
+  }, [dynamicValues, selectedCustomer]);
 
   const handleAddColumnClick = () => {
-    setNewColumnCount('');
-    setNewColumnNames([]);
     setIsAddColumnDialogOpen(true);
   };
 
-  const handleColumnCountChange = (val) => {
-    setNewColumnCount(val);
-    const count = parseInt(val);
-    if (!isNaN(count) && count > 0) {
-      setNewColumnNames(Array(count).fill('').map((_, i) => `Column Name ${i + 1}`));
-    } else {
-      setNewColumnNames([]);
-    }
+  const submitNewColumns = (newCols) => {
+    setDynamicColumns(prev => [...prev, ...newCols.map(c => ({ ...c, type: 'add' }))]);
   };
-
-  const handleColumnNameChange = (index, value) => {
-    const updated = [...newColumnNames];
-    updated[index] = value;
-    setNewColumnNames(updated);
-  };
-
-  const submitNewColumns = () => {
-    const count = parseInt(newColumnCount);
-    if (isNaN(count) || count <= 0) return;
-
-    // Validate all names are filled
-    if (newColumnNames.some(name => !name.trim())) {
-      alert('Please fill all column names.');
-      return;
-    }
-
-    const timestamp = Date.now();
-    const newCols = newColumnNames.map((name, i) => ({
-      id: `dyn_${timestamp}_${i}`,
-      name: name.trim(),
-      type: 'add'
-    }));
-
-    setDynamicColumns(prev => [...prev, ...newCols]);
-    setIsAddColumnDialogOpen(false);
-  };
-
-  const addDynamicColumn = useCallback(() => {
-    // This function is now superseded by the Dialog flow
-    handleAddColumnClick();
-  }, []);
-
-
 
   const deleteColumn = useCallback((colId) => {
     if (confirm('Delete this column and all its values?')) {
@@ -261,7 +247,7 @@ export const PriceList = () => {
       </TableCell>
     )),
     <TableCell key="price" sx={{ ...mitsubishiHeaderStyle, color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.05) }}>Price</TableCell>
-  ], [theme, dynamicColumns, deleteColumn, addDynamicColumn, mitsubishiHeaderStyle]);
+  ], [theme, dynamicColumns, deleteColumn, mitsubishiHeaderStyle]);
 
   /**
    * MAP AN API CALL TO THIS TABLE:
@@ -272,15 +258,16 @@ export const PriceList = () => {
       setError(null);
       try {
         await new Promise(resolve => setTimeout(resolve, 800));
-        if (selectedCustomer === 'Mitsubishi') {
-          setData(mitsubishiMainData);
-          const mitsubishiVersion = {
-            id: 'mits-v1',
+        if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+          const mainData = selectedCustomer === 'Mitsubishi' ? mitsubishiMainData : otisMainData.rows;
+          setData(mainData);
+          const customerVersion = {
+            id: `${selectedCustomer.toLowerCase()}-v1`,
             date: new Date(),
-            prices: mitsubishiMainData.reduce((acc, item) => ({ ...acc, [item.id]: item.revisedPrice }), {})
+            prices: mainData.reduce((acc, item) => ({ ...acc, [item.id]: item.revisedPrice }), {})
           };
-          setVersions([mitsubishiVersion]);
-          setSelectedVersionId(mitsubishiVersion.id);
+          setVersions([customerVersion]);
+          setSelectedVersionId(customerVersion.id);
         } else {
           const mockItems = MOCK_PRICING_DATA.map(({ price, ...item }) => item);
           const mockVersions = getMockVersions(MOCK_PRICING_DATA);
@@ -374,7 +361,7 @@ export const PriceList = () => {
   }, [versions.length]);
 
   useEffect(() => {
-    if (selectedCustomer !== 'Mitsubishi') {
+    if (selectedCustomer !== 'Mitsubishi' && selectedCustomer !== 'Otis') {
       setViewType('rm');
     }
   }, [selectedCustomer]);
@@ -448,42 +435,20 @@ export const PriceList = () => {
               </Button>
             </>
           )}
-
-          {selectedCustomer === 'Mitsubishi' && (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setMaterialWeightsOpen(true)}
-              sx={{
-                borderColor: 'primary.main',
-                color: 'primary.main',
-                fontWeight: 700,
-                px: 2,
-                height: 40,
-                background: 'rgba(13, 148, 136, 0.05)',
-                '&:hover': { background: 'rgba(13, 148, 136, 0.1)' }
-              }}
-            >
-              Show Material Weights
-            </Button>
-          )}
         </Stack>
       </Stack>
 
-      {/* Merged Mitsubishi Table */}
-      {selectedCustomer === 'Mitsubishi' && (
-        <MitsubishiTable
-          newIndexDate={newIndexDate}
-          setNewIndexDate={setNewIndexDate}
-          newIndexPrices={newIndexPrices}
-          handleNewIndexPriceChange={handleNewIndexPriceChange}
-          posVarianceThreshold={posVarianceThreshold}
-          setPosVarianceThreshold={setPosVarianceThreshold}
-          negVarianceThreshold={negVarianceThreshold}
-          setNegVarianceThreshold={setNegVarianceThreshold}
-          onShowWeights={() => setMaterialWeightsOpen(true)}
-        />
-      )}
+      {/* Universal Material Index Table (Above Table) */}
+      <MaterialIndexTable
+        materialIndexes={selectedCustomer === 'Otis' ? OTIS_MATERIAL_INDEXES : MITSUBISHI_MATERIAL_INDEXES}
+        referenceIndexes={selectedCustomer === 'Otis' ? OTIS_REFERENCE_INDEX : MITSUBISHI_REFERENCE_INDEX}
+        newIndexDate={newIndexDate}
+        setNewIndexDate={setNewIndexDate}
+        newIndexPrices={newIndexPrices}
+        handleNewIndexPriceChange={handleNewIndexPriceChange}
+        posVarianceThreshold={posVarianceThreshold}
+        negVarianceThreshold={negVarianceThreshold}
+      />
 
       {/* Table Container */}
       <Paper
@@ -519,7 +484,7 @@ export const PriceList = () => {
               </Stack>
             )}
 
-            {selectedCustomer === 'Mitsubishi' && (
+            {(selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') && (
               <>
                 <Divider orientation="vertical" flexItem sx={{ mx: 2, height: 24, alignSelf: 'center' }} />
                 <ToggleButtonGroup
@@ -681,17 +646,25 @@ export const PriceList = () => {
               Retry Connection
             </Button>
           </Box>
-        ) : (selectedCustomer === 'Mitsubishi' && viewType === 'eitem') ? (
+        ) : ((selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') && viewType === 'eitem') ? (
           <Box sx={{ p: 3 }}>
             <EItemPriceList />
           </Box>
+        ) : selectedCustomer === 'Otis' ? (
+          <OtisMainTable 
+            data={otisMainData}
+            searchTerm={searchTerm}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            selectedVersion={selectedVersion}
+          />
         ) : (
           <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
             <Table stickyHeader size="small" key={selectedCustomer}>
 
               <TableHead>
                 <TableRow>
-                  {selectedCustomer === 'Mitsubishi' ? mitsubishiHeadersList : (
+                  {selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis' ? mitsubishiHeadersList : (
                     visibleColumns && [...visibleColumns.filter(c => c !== 'Price'), 'Price'].map(col => {
                       const isPrice = col === 'Price';
                       const primaryMain = theme.palette?.primary?.main || '#0d9488';
@@ -739,15 +712,15 @@ export const PriceList = () => {
                     finalPrice += val;
                   });
 
-                  if (selectedCustomer === 'Mitsubishi') {
-                    const mitsubishiRow = [
+                  if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+                    const rowData = [
                       <TableCell key="sn" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{serialNumber}</Typography></TableCell>,
                       <TableCell key="co" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{item.co}</Typography></TableCell>,
                       <TableCell key="ch" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{item.ch}</Typography></TableCell>,
                       <TableCell key="fi" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{item.finish}</Typography></TableCell>,
-                      <TableCell key="wpn" align="center"><Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.7rem', fontFamily: 'monospace' }}>{item.winPartNumber}</Typography></TableCell>,
-                      <TableCell key="desc" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</Typography></TableCell>,
-                      <TableCell key="imec" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.disabled' }}>{item.imecPartNumber}</Typography></TableCell>,
+                      <TableCell key="wpn" align="center"><Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.7rem', fontFamily: 'monospace' }}>{item.winPartNumber || item.code}</Typography></TableCell>,
+                      <TableCell key="desc" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description || item.product}</Typography></TableCell>,
+                      <TableCell key="imec" align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.disabled' }}>{item.imecPartNumber || '-'}</Typography></TableCell>,
                       <TableCell key="rev" align="center"><Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}>₹ {basePrice.toLocaleString()}</Typography></TableCell>,
                       <TableCell key="rm" align="center"><Typography variant="body2" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'info.main' }}>{item.rmMovement}</Typography></TableCell>,
                       <TableCell key="add" sx={{ width: 50 }}></TableCell>,
@@ -785,7 +758,7 @@ export const PriceList = () => {
                     ];
 
                     return (
-                      <TableRow key={item.id} hover sx={{ '& td': { py: 1, px: 2, borderBottom: '1px solid', borderColor: 'divider' } }}>{mitsubishiRow}</TableRow>
+                      <TableRow key={item.id} hover sx={{ '& td': { py: 1, px: 2, borderBottom: '1px solid', borderColor: 'divider' } }}>{rowData}</TableRow>
                     );
                   }
 
@@ -859,7 +832,6 @@ export const PriceList = () => {
           </TableContainer>
         )}
 
-        {/* Pagination Footer */}
         {!isLoading && filteredData.length > 0 && (
           <Box sx={{
             p: 2,
@@ -932,74 +904,11 @@ export const PriceList = () => {
         onClose={() => setMaterialWeightsOpen(false)}
       />
 
-      {/* Add Adjacent Column Dialog */}
-      <Dialog
+      <AddColumnDialog
         open={isAddColumnDialogOpen}
         onClose={() => setIsAddColumnDialogOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 3, p: 1 }
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 800, fontSize: '1.1rem', pb: 1 }}>
-          Additional Values
-        </DialogTitle>
-        <DialogContent>
-          {/* <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1, display: 'block' }}>
-            Enter the number of columns you want to add, then provide names for each.
-          </Typography> */}
-
-          <TextField
-            fullWidth
-            label="Price Impact Values Field Count"
-            type="number"
-            value={newColumnCount}
-            onChange={(e) => handleColumnCountChange(e.target.value)}
-            size="small"
-            sx={{ mt: 2, mb: 3 }}
-            autoFocus
-          />
-
-          <AnimatePresence>
-            {newColumnNames.length > 0 && (
-              <Box component={motion.div} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} sx={{ mt: 1 }}>
-                <Divider sx={{ mb: 2 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled' }}>Column Names</Typography>
-                </Divider>
-                <Stack spacing={2} sx={{ maxHeight: 300, overflow: 'auto', px: 0.5, py: 1 }}>
-                  {newColumnNames.map((name, index) => (
-                    <TextField
-                      key={index}
-                      fullWidth
-                      label={`Column Name ${index + 1}`}
-                      variant="outlined"
-                      size="small"
-                      value={name}
-                      onChange={(e) => handleColumnNameChange(index, e.target.value)}
-                      required
-                    />
-                  ))}
-                </Stack>
-              </Box>
-            )}
-          </AnimatePresence>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setIsAddColumnDialogOpen(false)} sx={{ fontWeight: 700, color: 'text.secondary' }}>
-            Cancel
-          </Button>
-          <Button
-            onClick={submitNewColumns}
-            variant="contained"
-            disableElevation
-            disabled={!newColumnCount || newColumnNames.some(n => !n.trim())}
-            sx={{ fontWeight: 700, borderRadius: 2 }}
-          >
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSubmit={submitNewColumns}
+      />
     </Box>
   );
 };

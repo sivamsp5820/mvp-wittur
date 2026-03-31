@@ -8,7 +8,7 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
-import { E_ITEM_PRICE_DATA } from '../../data/eItemPriceData';
+import { E_ITEM_PRICE_DATA } from '../../../data/eItemPriceData';
 
 const EItemPriceList = () => {
   const COLORS = {

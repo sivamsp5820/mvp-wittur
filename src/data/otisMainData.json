@@ -1,0 +1,65 @@
+{
+  "headers": [
+    "Sno",
+    "Clear Opening",
+    "Clear Height",
+    "Door Type",
+    "Handage",
+    "Fire Rating",
+    "Toeguard",
+    "Finish Code",
+    "Revised Price from 1st July 2025 to 31st Dec 2025",
+    "Final Price"
+  ],
+  "rows": [
+    {
+      "id": "o1",
+      "sno": 1,
+      "co": "700mm",
+      "ch": "2000mm",
+      "doorType": "Telescopic",
+      "handage": "Left Hand",
+      "fireRating": "EN81-58",
+      "toeguard": "TG2",
+      "finishCode": "MS 7035H",
+      "revisedPrice": 12000
+    },
+    {
+      "id": "o2",
+      "sno": 2,
+      "co": "700mm",
+      "ch": "2000mm",
+      "doorType": "Center Opening",
+      "handage": "N/A",
+      "fireRating": "EN81-58",
+      "toeguard": "TG2",
+      "finishCode": "SS 430",
+      "revisedPrice": 14000
+    },
+    {
+      "id": "o3",
+      "sno": 3,
+      "co": "700mm",
+      "ch": "2000mm",
+      "doorType": "Telescopic",
+      "handage": "Right Hand",
+      "fireRating": "EN81-58",
+      "toeguard": "TG1",
+      "finishCode": "SS 304",
+      "revisedPrice": 15500
+    },
+    {
+      "id": "o4",
+      "sno": 4,
+      "co": "800mm",
+      "ch": "2000mm",
+      "doorType": "Center Opening",
+      "handage": "N/A",
+      "fireRating": "EN81-58",
+      "toeguard": "TG2",
+      "finishCode": "MS 7035H",
+      "revisedPrice": 12500
+    }
+  ],
+  "adjacentColumns": []
+}

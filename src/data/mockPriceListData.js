@@ -41,29 +41,17 @@ export const MOCK_PRICING_DATA = [
   { id: 20, code: "E.COM.1000.2100.L2C.E120.PF", product: "Commercial Door", type: "Standard", opening: "1000mm", height: "2100mm", doorType: "L2C", fireRating: "E120", panelType: "PF", frameSize: "120mm", finish: "Powder Coated", grade: "Grade A", price: 23500 }
 ];
 
-export const MITSUBISHI_MATERIAL_INDEXES = [
-  { finish: 'Painted', material: 'MSPC', type: '1.0 mm' },
-  { finish: '#4', material: 'SS304', type: '0.5 mm' },
-  { finish: '#4', material: 'SS304', type: '1.0 mm' },
-  { finish: '#4', material: 'SS430', type: '0.5 mm' },
-  { finish: '#4', material: 'SS430', type: '1.0 mm' },
-];
+import mitsubishiMaterialData from './mitsubishiMaterialData.json';
+import otisMaterialData from './otisMaterialData.json';
 
-export const MITSUBISHI_REFERENCE_INDEX = [
-  { price: '67.00', desc: 'Oct 2025 Purchase price' },
-  { price: '270.00', desc: 'Oct 2025 Purchase price' },
-  { price: '242.00', desc: 'Oct 2025 Purchase price' },
-  { price: '190.00', desc: 'Oct 2025 Purchase price' },
-  { price: '170.00', desc: 'Oct 2025 Purchase price' },
-];
+export const MITSUBISHI_MATERIAL_INDEXES = mitsubishiMaterialData.materials;
+export const OTIS_MATERIAL_INDEXES = otisMaterialData.materials;
 
-export const MITSUBISHI_DEFAULT_NEW_INDEX = [
-  { price: '66.50', desc: 'Jan 2026 Purchase price' },
-  { price: '270.00', desc: 'Jan 2026 Purchase price' },
-  { price: '242.00', desc: 'Jan 2026 Purchase price' },
-  { price: '190.00', desc: 'Jan 2026 Purchase price' },
-  { price: '170.00', desc: 'Jan 2026 Purchase price' },
-];
+export const MITSUBISHI_REFERENCE_INDEX = mitsubishiMaterialData.referencePrices;
+export const OTIS_REFERENCE_INDEX = otisMaterialData.referencePrices;
+
+export const MITSUBISHI_DEFAULT_NEW_INDEX = mitsubishiMaterialData.defaultNewPrices;
+export const OTIS_DEFAULT_NEW_INDEX = otisMaterialData.defaultNewPrices;
 
 export const CENTER_OPENING_WEIGHTS = [
   { w: 700, c1: '39.19', c2: '32.21', c3: '8.39', c4: '14.5', c5: '6.98' },
