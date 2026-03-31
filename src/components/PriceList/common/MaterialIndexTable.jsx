@@ -72,9 +72,9 @@ const MaterialIndexTable = ({
                     <>
                       <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary' }}>Price Basis : 10/1/2025</Typography>
                       <Tooltip title="Move current New Index Prices to Reference">
-                        <IconButton 
-                          size="small" 
-                          onClick={onMoveToReference} 
+                        <IconButton
+                          size="small"
+                          onClick={onMoveToReference}
                           sx={{ color: 'primary.main', border: '1px solid', borderColor: 'primary.main', p: 0.2, borderRadius: 1 }}
                         >
                           <ChevronsLeft size={14} />
@@ -83,15 +83,15 @@ const MaterialIndexTable = ({
                     </>
                   ) : (
                     <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <IconButton 
-                        size="small" 
-                        onClick={onPrevHistory} 
+                      <IconButton
+                        size="small"
+                        onClick={onPrevHistory}
                         disabled={historyIndex === 0}
                         sx={{ p: 0.2, color: 'primary.main' }}
                       >
                         <ChevronLeft size={16} />
                       </IconButton>
-                      
+
                       <Box sx={{ minWidth: 140, textAlign: 'center' }}>
                         <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.65rem' }}>
                           {historyDate || 'Price Basis : 10/1/2025'}
@@ -101,9 +101,9 @@ const MaterialIndexTable = ({
                         </Typography>
                       </Box>
 
-                      <IconButton 
-                        size="small" 
-                        onClick={onNextHistory} 
+                      <IconButton
+                        size="small"
+                        onClick={onNextHistory}
                         disabled={historyIndex === historyLength - 1}
                         sx={{ p: 0.2, color: 'primary.main' }}
                       >
@@ -131,18 +131,18 @@ const MaterialIndexTable = ({
               </TableCell>
               <TableCell colSpan={2} align="center">
                 <Stack spacing={0.5} sx={{ px: 1 }}>
-                   <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-                     <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>+ve Threshold:</Typography>
-                     <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: 'text.primary', minWidth: 40, textAlign: 'right', px: 1 }}>
-                       {posVarianceThreshold}%
-                     </Typography>
-                   </Stack>
-                   <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-                     <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>-ve Threshold:</Typography>
-                     <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: 'text.primary', minWidth: 40, textAlign: 'right', px: 1 }}>
-                       {negVarianceThreshold}%
-                     </Typography>
-                   </Stack>
+                  <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>+ve Threshold:</Typography>
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: 'text.primary', minWidth: 40, textAlign: 'right', px: 1 }}>
+                      {posVarianceThreshold}%
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#d32f2f' }}>-ve Threshold:</Typography>
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: 'text.primary', minWidth: 40, textAlign: 'right', px: 1 }}>
+                      {negVarianceThreshold}%
+                    </Typography>
+                  </Stack>
                 </Stack>
               </TableCell>
             </TableRow>

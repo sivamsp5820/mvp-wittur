@@ -581,28 +581,30 @@ export const PriceList = () => {
         </Stack>
       </Stack>
 
-      {/* Universal Material Index Table (Above Table) */}
-      <MaterialIndexTable
-        materialIndexes={selectedCustomer === 'Otis' ? OTIS_MATERIAL_INDEXES : MITSUBISHI_MATERIAL_INDEXES}
-        referenceIndexes={isEditingMaterialPrices ? draftReferencePrices : materialPriceHistory[historyIndex].prices}
-        newIndexDate={newIndexDate}
-        setNewIndexDate={setNewIndexDate}
-        newIndexPrices={isEditingMaterialPrices ? draftNewIndexPrices : newIndexPrices}
-        handleNewIndexPriceChange={handleNewIndexPriceChange}
-        posVarianceThreshold={posVarianceThreshold}
-        negVarianceThreshold={negVarianceThreshold}
-        isLoading={isLoading}
-        isEditing={isEditingMaterialPrices}
-        onStartEdit={handleStartEditMaterialPrices}
-        onConfirmEdit={handleConfirmEditMaterialPrices}
-        onCancelEdit={handleCancelEditMaterialPrices}
-        onMoveToReference={handleMoveToReference}
-        historyIndex={historyIndex}
-        historyLength={materialPriceHistory.length}
-        historyDate={materialPriceHistory[historyIndex].date}
-        onPrevHistory={handlePrevHistory}
-        onNextHistory={handleNextHistory}
-      />
+      {/* Universal Material Index Table (Above Table) - Only show for Mitsubishi and Otis */}
+      {(selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') && (
+        <MaterialIndexTable
+          materialIndexes={selectedCustomer === 'Otis' ? OTIS_MATERIAL_INDEXES : MITSUBISHI_MATERIAL_INDEXES}
+          referenceIndexes={isEditingMaterialPrices ? draftReferencePrices : materialPriceHistory[historyIndex].prices}
+          newIndexDate={newIndexDate}
+          setNewIndexDate={setNewIndexDate}
+          newIndexPrices={isEditingMaterialPrices ? draftNewIndexPrices : newIndexPrices}
+          handleNewIndexPriceChange={handleNewIndexPriceChange}
+          posVarianceThreshold={posVarianceThreshold}
+          negVarianceThreshold={negVarianceThreshold}
+          isLoading={isLoading}
+          isEditing={isEditingMaterialPrices}
+          onStartEdit={handleStartEditMaterialPrices}
+          onConfirmEdit={handleConfirmEditMaterialPrices}
+          onCancelEdit={handleCancelEditMaterialPrices}
+          onMoveToReference={handleMoveToReference}
+          historyIndex={historyIndex}
+          historyLength={materialPriceHistory.length}
+          historyDate={materialPriceHistory[historyIndex].date}
+          onPrevHistory={handlePrevHistory}
+          onNextHistory={handleNextHistory}
+        />
+      )}
 
       {/* Table Container */}
       <Paper
