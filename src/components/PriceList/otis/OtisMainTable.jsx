@@ -108,9 +108,12 @@ const OtisMainTable = ({
     return data.rows.filter(item => {
       const search = searchTerm.toLowerCase();
       return (
-        item.itemCode?.toLowerCase().includes(search) ||
-        item.finishCode?.toLowerCase().includes(search) ||
-        item.doorType?.toLowerCase().includes(search) ||
+        item.item_code?.toLowerCase().includes(search) ||
+        item.finish_code?.toLowerCase().includes(search) ||
+        item.door_type?.toLowerCase().includes(search) ||
+        item.fire_rating?.toLowerCase().includes(search) ||
+        item.co?.toString().includes(search) ||
+        item.ch?.toString().includes(search) ||
         item.id?.toLowerCase().includes(search)
       );
     });
@@ -143,17 +146,17 @@ const OtisMainTable = ({
       <Table stickyHeader size="small">
         <TableHead>
           <TableRow>
-            {/* Header sequence according to request */}
-            <TableCell sx={otisHeaderStyle}>Sno</TableCell>
+            {/* Header sequence according to otisMainData.json headers */}
+            <TableCell sx={otisHeaderStyle}>S.No</TableCell>
             <TableCell sx={otisHeaderStyle}>Item Code</TableCell>
-            <TableCell sx={otisHeaderStyle}>Clear Opening</TableCell>
-            <TableCell sx={otisHeaderStyle}>Clear Height</TableCell>
-            <TableCell sx={otisHeaderStyle}>Door Type</TableCell>
-            <TableCell sx={otisHeaderStyle}>Handage</TableCell>
-            <TableCell sx={otisHeaderStyle}>Fire Rating</TableCell>
+            <TableCell sx={otisHeaderStyle}>CLEAR OPENING</TableCell>
+            <TableCell sx={otisHeaderStyle}>CLEAR HEIGHT</TableCell>
+            <TableCell sx={otisHeaderStyle}>DOOR TYPE</TableCell>
+            <TableCell sx={otisHeaderStyle}>HANDAGE</TableCell>
+            <TableCell sx={otisHeaderStyle}>FIRE RATING</TableCell>
             <TableCell sx={otisHeaderStyle}>Toeguard</TableCell>
-            <TableCell sx={otisHeaderStyle}>Finish Code</TableCell>
-            <TableCell sx={otisHeaderStyle}>Revised Price from 1st July 2025 to 31st Dec 2025</TableCell>
+            <TableCell sx={otisHeaderStyle}>FINISH CODE</TableCell>
+            <TableCell sx={otisHeaderStyle}>Revised Price From 1st July 2025 to 31st December 2025</TableCell>
 
             {/* Adjacent Columns (Dynamic) */}
             {adjacentColumns.map(col => (
@@ -200,8 +203,9 @@ const OtisMainTable = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {paginatedRows.map((row) => {
-            const basePrice = row.revisedPrice || 0;
+          {paginatedRows.map((row, index) => {
+            const basePrice = row.revised_price || 0;
+            const serialNumber = (page - 1) * rowsPerPage + index + 1;
 
             // Calculate final price: Revised Price + sum of dynamic columns
             let finalPrice = basePrice;
@@ -212,15 +216,15 @@ const OtisMainTable = ({
 
             return (
               <TableRow key={row.id} hover sx={{ '& td': { py: 1.5, px: 2, borderBottom: '1px solid', borderColor: 'divider' } }}>
-                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.sno}</Typography></TableCell>
-                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{row.itemCode}</Typography></TableCell>
-                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.co}</Typography></TableCell>
-                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.ch}</Typography></TableCell>
-                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.doorType}</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{serialNumber}</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{row.item_code}</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.co}mm</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.ch}mm</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.door_type}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.handage}</Typography></TableCell>
-                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.fireRating}</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.fire_rating}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.toeguard}</Typography></TableCell>
-                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.finishCode}</Typography></TableCell>
+                <TableCell align="center"><Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{row.finish_code}</Typography></TableCell>
                 <TableCell align="center"><Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>₹ {basePrice.toLocaleString()}</Typography></TableCell>
 
                 {/* Dynamic adjacent cells */}
