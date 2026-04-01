@@ -58,6 +58,59 @@ import AddColumnDialog from './common/AddColumnDialog';
 import OtisMainTable from './otis/OtisMainTable';
 import mitsubishiMainData from '../../data/mitsubishiMainData.json';
 import otisMainData from '../../data/otisMainData.json';
+import HierarchicalSelect from './common/HierarchicalSelect';
+
+const INDEPENDENT_TREE_OPTIONS = [
+  {
+    id: 'CORE', label: 'CORE', children: [
+      {
+        id: 'CORE-LD', label: 'LD', children: [
+          { id: 'CORE-LD-TO', label: 'Telescopic', isLeaf: true, metadata: { category: 'CORE', structure: 'LD', mechanism: 'TO' }, chipLabel: 'CORE > LD > Telescopic' },
+          { id: 'CORE-LD-CO', label: 'Center', isLeaf: true, metadata: { category: 'CORE', structure: 'LD', mechanism: 'CO' }, chipLabel: 'CORE > LD > Center' }
+        ]
+      },
+      {
+        id: 'CORE-CD', label: 'CD', children: [
+          { id: 'CORE-CD-TO', label: 'Telescopic', isLeaf: true, metadata: { category: 'CORE', structure: 'CD', mechanism: 'TO' }, chipLabel: 'CORE > CD > Telescopic' },
+          { id: 'CORE-CD-CO', label: 'Center', isLeaf: true, metadata: { category: 'CORE', structure: 'CD', mechanism: 'CO' }, chipLabel: 'CORE > CD > Center' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'CORE MD', label: 'CORE MD', children: [
+      {
+        id: 'CORE MD-LD', label: 'LD', children: [
+          { id: 'CORE MD-LD-TO', label: 'Telescopic', isLeaf: true, metadata: { category: 'CORE MD', structure: 'LD', mechanism: 'TO' }, chipLabel: 'CORE MD > LD > Telescopic' },
+          { id: 'CORE MD-LD-CO', label: 'Center', isLeaf: true, metadata: { category: 'CORE MD', structure: 'LD', mechanism: 'CO' }, chipLabel: 'CORE MD > LD > Center' }
+        ]
+      },
+      {
+        id: 'CORE MD-CD', label: 'CD', children: [
+          { id: 'CORE MD-CD-TO', label: 'Telescopic', isLeaf: true, metadata: { category: 'CORE MD', structure: 'CD', mechanism: 'TO' }, chipLabel: 'CORE MD > CD > Telescopic' },
+          { id: 'CORE MD-CD-CO', label: 'Center', isLeaf: true, metadata: { category: 'CORE MD', structure: 'CD', mechanism: 'CO' }, chipLabel: 'CORE MD > CD > Center' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'STELLAR', label: 'STELLAR', children: [
+      {
+        id: 'STELLAR-LD', label: 'LD', children: [
+          { id: 'STELLAR-LD-TO', label: 'Telescopic', isLeaf: true, metadata: { category: 'STELLAR', structure: 'LD', mechanism: 'TO' }, chipLabel: 'STELLAR > LD > Telescopic' },
+          { id: 'STELLAR-LD-CO', label: 'Center', isLeaf: true, metadata: { category: 'STELLAR', structure: 'LD', mechanism: 'CO' }, chipLabel: 'STELLAR > LD > Center' }
+        ]
+      },
+      {
+        id: 'STELLAR-CD', label: 'CD', children: [
+          { id: 'STELLAR-CD-TO', label: 'Telescopic', isLeaf: true, metadata: { category: 'STELLAR', structure: 'CD', mechanism: 'TO' }, chipLabel: 'STELLAR > CD > Telescopic' },
+          { id: 'STELLAR-CD-CO', label: 'Center', isLeaf: true, metadata: { category: 'STELLAR', structure: 'CD', mechanism: 'CO' }, chipLabel: 'STELLAR > CD > Center' }
+        ]
+      }
+    ]
+  }
+];
+
 
 
 export const PriceList = () => {
@@ -98,6 +151,9 @@ export const PriceList = () => {
   const [isEditingMaterialPrices, setIsEditingMaterialPrices] = useState(false);
   const [draftNewIndexPrices, setDraftNewIndexPrices] = useState([]);
   const [draftReferencePrices, setDraftReferencePrices] = useState([]);
+
+  // Independent Filters
+  const [selectedTreeFilters, setSelectedTreeFilters] = useState([]);
 
   // Material Price History
   const [materialPriceHistory, setMaterialPriceHistory] = useState([
@@ -369,12 +425,24 @@ export const PriceList = () => {
 
     return data.filter(item => {
       if (!item) return false;
+
+      // Independent specific filtering
+      if (selectedCustomer === 'Independent') {
+        if (selectedTreeFilters.length > 0) {
+          const isMatch = selectedTreeFilters.some(filterNode => {
+            const { category, structure, mechanism } = filterNode.metadata;
+            return item.category === category && item.structure === structure && item.openingType === mechanism;
+          });
+          if (!isMatch) return false;
+        }
+      }
+
       const code = (item.code || item.winPartNumber || '').toLowerCase();
       const product = (item.product || item.description || '').toLowerCase();
       const search = searchTerm.toLowerCase();
       return code.includes(search) || product.includes(search);
     });
-  }, [data, searchTerm]);
+  }, [data, searchTerm, selectedCustomer, selectedTreeFilters]);
 
   const paginatedData = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
@@ -605,6 +673,22 @@ export const PriceList = () => {
           onNextHistory={handleNextHistory}
         />
       )}
+
+      {/* Independent Filter Bar */}
+      {selectedCustomer === 'Independent' && (
+        <Stack sx={{ mb: 4, px: 1, maxWidth: 660 }}>
+          <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1.5, ml: 0.5 }}>
+            Filter Categories & Structures
+          </Typography>
+          <HierarchicalSelect
+            options={INDEPENDENT_TREE_OPTIONS}
+            value={selectedTreeFilters}
+            onChange={setSelectedTreeFilters}
+            placeholder="Select Categories, Structures & Mechanisms..."
+          />
+        </Stack>
+      )}
+
 
       {/* Table Container */}
       <Paper
