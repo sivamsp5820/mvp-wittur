@@ -118,8 +118,8 @@ const INDEPENDENT_CATEGORIES = [
 ];
 
 const INDEPENDENT_TYPES = [
-  { label: 'Landing Doors (LD)', value: 'LD' },
-  { label: 'Car Doors (CD)', value: 'CD' }
+  { label: 'LD', value: 'LD' },
+  { label: 'CD', value: 'CD' }
 ];
 
 const INDEPENDENT_OPENING_TYPES = [
