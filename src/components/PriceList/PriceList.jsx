@@ -122,6 +122,11 @@ const INDEPENDENT_TYPES = [
   { label: 'Car Doors (CD)', value: 'CD' }
 ];
 
+const INDEPENDENT_OPENING_TYPES = [
+  { label: 'Telescopic', value: 'TO' },
+  { label: 'Center', value: 'CO' }
+];
+
 
 export const PriceList = () => {
   const theme = useTheme();
@@ -711,7 +716,7 @@ export const PriceList = () => {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ pl: 0.5 }}>
             <Box>
               <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.05em', mb: 1, display: 'block', fontSize: '0.7rem' }}>
-                DOOR CATEGORIES
+                PRODUCT
               </Typography>
               <Stack direction="row" flexWrap="wrap" gap={1}>
                 {INDEPENDENT_CATEGORIES.map(cat => {
@@ -755,7 +760,7 @@ export const PriceList = () => {
 
             <Box>
               <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.05em', mb: 1, display: 'block', fontSize: '0.7rem' }}>
-                DOOR TYPES
+                TYPE
               </Typography>
               <Stack direction="row" flexWrap="wrap" gap={1}>
                 {INDEPENDENT_TYPES.map(type => {
@@ -796,6 +801,52 @@ export const PriceList = () => {
                 })}
               </Stack>
             </Box>
+
+            <Box>
+              <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.05em', mb: 1, display: 'block', fontSize: '0.7rem' }}>
+                DOOR TYPE
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                {INDEPENDENT_OPENING_TYPES.map(type => {
+                  const isSelected = selectedTypes.includes(type.value);
+                  return (
+                    <Button
+                      key={type.value}
+                      variant="outlined"
+                      onClick={() => {
+                        setSelectedTypes(prev =>
+                          prev.includes(type.value)
+                            ? prev.filter(t => t !== type.value)
+                            : [...prev, type.value]
+                        );
+                      }}
+                      sx={{
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        color: isSelected ? 'primary.main' : '#475569',
+                        bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.06) : 'transparent',
+                        borderColor: isSelected ? 'primary.main' : '#e2e8f0',
+                        px: 2.5,
+                        py: 0.5,
+                        fontWeight: isSelected ? 600 : 500,
+                        fontSize: '0.8125rem',
+                        minWidth: 'auto',
+                        whiteSpace: 'nowrap',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.1) : '#f1f5f9',
+                          borderColor: isSelected ? 'primary.main' : '#cbd5e1',
+                        }
+                      }}
+                    >
+                      {type.label}
+                    </Button>
+                  );
+                })}
+              </Stack>
+            </Box>
+
+
           </Stack>
         </Box>
       )}
