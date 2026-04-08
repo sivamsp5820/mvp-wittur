@@ -111,6 +111,16 @@ const INDEPENDENT_TREE_OPTIONS = [
   }
 ];
 
+const INDEPENDENT_CATEGORIES = [
+  { label: 'CORE', value: 'CORE' },
+  { label: 'COREMD', value: 'CORE MD' },
+  { label: 'STELAR', value: 'STELLAR' }
+];
+
+const INDEPENDENT_TYPES = [
+  { label: 'Landing Doors (LD)', value: 'LD' },
+  { label: 'Car Doors (CD)', value: 'CD' }
+];
 
 
 export const PriceList = () => {
@@ -153,7 +163,9 @@ export const PriceList = () => {
   const [draftReferencePrices, setDraftReferencePrices] = useState([]);
 
   // Independent Filters
-  const [selectedTreeFilters, setSelectedTreeFilters] = useState([]);
+  // const [selectedTreeFilters, setSelectedTreeFilters] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
 
   // Material Price History
   const [materialPriceHistory, setMaterialPriceHistory] = useState([
@@ -428,12 +440,20 @@ export const PriceList = () => {
 
       // Independent specific filtering
       if (selectedCustomer === 'Independent') {
+        /*
         if (selectedTreeFilters.length > 0) {
           const isMatch = selectedTreeFilters.some(filterNode => {
             const { category, structure, mechanism } = filterNode.metadata;
             return item.category === category && item.structure === structure && item.openingType === mechanism;
           });
           if (!isMatch) return false;
+        }
+        */
+        if (selectedCategories.length > 0) {
+          if (!selectedCategories.includes(item.category)) return false;
+        }
+        if (selectedTypes.length > 0) {
+          if (!selectedTypes.includes(item.structure)) return false;
         }
       }
 
@@ -442,7 +462,7 @@ export const PriceList = () => {
       const search = searchTerm.toLowerCase();
       return code.includes(search) || product.includes(search);
     });
-  }, [data, searchTerm, selectedCustomer, selectedTreeFilters]);
+  }, [data, searchTerm, selectedCustomer, selectedCategories, selectedTypes]);
 
   const paginatedData = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
@@ -676,7 +696,8 @@ export const PriceList = () => {
 
       {/* Independent Filter Bar */}
       {selectedCustomer === 'Independent' && (
-        <Stack sx={{ mb: 4, px: 1, maxWidth: 660 }}>
+        <Box sx={{ mb: 4, px: 1 }}>
+          {/*
           <Typography variant="subtitle2" sx={{ color: 'text.secondary', fontWeight: 600, mb: 1.5, ml: 0.5 }}>
             Filter Categories & Structures
           </Typography>
@@ -686,7 +707,97 @@ export const PriceList = () => {
             onChange={setSelectedTreeFilters}
             placeholder="Select Categories, Structures & Mechanisms..."
           />
-        </Stack>
+          */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ pl: 0.5 }}>
+            <Box>
+              <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.05em', mb: 1, display: 'block', fontSize: '0.7rem' }}>
+                DOOR CATEGORIES
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                {INDEPENDENT_CATEGORIES.map(cat => {
+                  const isSelected = selectedCategories.includes(cat.value);
+                  return (
+                    <Button
+                      key={cat.value}
+                      variant="outlined"
+                      onClick={() => {
+                        setSelectedCategories(prev =>
+                          prev.includes(cat.value)
+                            ? prev.filter(c => c !== cat.value)
+                            : [...prev, cat.value]
+                        );
+                      }}
+                      sx={{
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        color: isSelected ? 'primary.main' : '#475569',
+                        bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.06) : 'transparent',
+                        borderColor: isSelected ? 'primary.main' : '#e2e8f0',
+                        px: 2.5,
+                        py: 0.5,
+                        fontWeight: isSelected ? 600 : 500,
+                        fontSize: '0.8125rem',
+                        minWidth: 'auto',
+                        whiteSpace: 'nowrap',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.1) : '#f1f5f9',
+                          borderColor: isSelected ? 'primary.main' : '#cbd5e1',
+                        }
+                      }}
+                    >
+                      {cat.label}
+                    </Button>
+                  );
+                })}
+              </Stack>
+            </Box>
+
+            <Box>
+              <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 600, letterSpacing: '0.05em', mb: 1, display: 'block', fontSize: '0.7rem' }}>
+                DOOR TYPES
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                {INDEPENDENT_TYPES.map(type => {
+                  const isSelected = selectedTypes.includes(type.value);
+                  return (
+                    <Button
+                      key={type.value}
+                      variant="outlined"
+                      onClick={() => {
+                        setSelectedTypes(prev =>
+                          prev.includes(type.value)
+                            ? prev.filter(t => t !== type.value)
+                            : [...prev, type.value]
+                        );
+                      }}
+                      sx={{
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        color: isSelected ? 'primary.main' : '#475569',
+                        bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.06) : 'transparent',
+                        borderColor: isSelected ? 'primary.main' : '#e2e8f0',
+                        px: 2.5,
+                        py: 0.5,
+                        fontWeight: isSelected ? 600 : 500,
+                        fontSize: '0.8125rem',
+                        minWidth: 'auto',
+                        whiteSpace: 'nowrap',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.1) : '#f1f5f9',
+                          borderColor: isSelected ? 'primary.main' : '#cbd5e1',
+                        }
+                      }}
+                    >
+                      {type.label}
+                    </Button>
+                  );
+                })}
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
       )}
 
 
