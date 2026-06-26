@@ -20,7 +20,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
-// Recursive Tree Node Component
+// Recursive Tree Node Compo=======ntasdasdasdasdasdasdasddasd
 const TreeNode = ({ node, level, expanded, toggleExpand, selectedNodes, handleSelect }) => {
   const theme = useTheme();
   const isExpanded = expanded.includes(node.id);
@@ -92,10 +92,10 @@ const HierarchicalSelect = ({ options, value, onChange, placeholder = 'Select it
   const inputRef = useRef(null);
 
   useEffect(() => {
-     // Optional: expand all level 1 nodes by default
-     if (options && options.length > 0 && expanded.length === 0) {
-        setExpanded(options.map(opt => opt.id));
-     }
+    // Optional: expand all level 1 nodes by default
+    if (options && options.length > 0 && expanded.length === 0) {
+      setExpanded(options.map(opt => opt.id));
+    }
   }, [options, expanded.length]);
 
   const handleClick = (event) => {
@@ -156,7 +156,7 @@ const HierarchicalSelect = ({ options, value, onChange, placeholder = 'Select it
           '& .MuiOutlinedInput-input': {
             cursor: 'pointer',
             padding: 0,
-            display: value.length === 0 ? 'block' : 'none', 
+            display: value.length === 0 ? 'block' : 'none',
           },
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: open ? theme.palette.primary.main : alpha(theme.palette.divider, 0.8),
@@ -206,12 +206,12 @@ const HierarchicalSelect = ({ options, value, onChange, placeholder = 'Select it
               </IconButton>
             )}
             <IconButton size="small" edge="end" sx={{ pointerEvents: 'none', p: 0.5 }}>
-              <KeyboardArrowDownIcon 
-                sx={{ 
+              <KeyboardArrowDownIcon
+                sx={{
                   transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
                   transition: 'transform 0.2s',
                   color: open ? theme.palette.primary.main : 'action.active'
-                }} 
+                }}
               />
             </IconButton>
           </InputAdornment>
@@ -257,9 +257,9 @@ const HierarchicalSelect = ({ options, value, onChange, placeholder = 'Select it
           ))}
           {(!options || options.length === 0) && (
             <ListItem>
-              <ListItemText 
-                primary="No items found" 
-                primaryTypographyProps={{ align: 'center', color: 'text.secondary', fontSize: '0.85rem' }} 
+              <ListItemText
+                primary="No items found"
+                primaryTypographyProps={{ align: 'center', color: 'text.secondary', fontSize: '0.85rem' }}
               />
             </ListItem>
           )}
