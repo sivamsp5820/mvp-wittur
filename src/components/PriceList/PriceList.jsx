@@ -56,8 +56,10 @@ import PriceHistoryPopover from './common/PriceHistoryPopover';
 import EItemPriceList from './common/EItemPriceList';
 import AddColumnDialog from './common/AddColumnDialog';
 import OtisMainTable from './otis/OtisMainTable';
+import KoneMainTable from './kone/KoneMainTable';
 import mitsubishiMainData from '../../data/mitsubishiMainData.json';
 import otisMainData from '../../data/otisMainData.json';
+import koneMainData from '../../data/koneMainData.json';
 import HierarchicalSelect from './common/HierarchicalSelect';
 
 const INDEPENDENT_TREE_OPTIONS = [
@@ -186,7 +188,7 @@ export const PriceList = () => {
       setNegVarianceThreshold('0');
     }
 
-    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis' || selectedCustomer === 'Kone') {
       const savedCols = localStorage.getItem(`${selectedCustomer.toLowerCase()}_dynamic_columns`);
       const savedVals = localStorage.getItem(`${selectedCustomer.toLowerCase()}_dynamic_values`);
       setDynamicColumns(savedCols ? JSON.parse(savedCols) : []);
@@ -198,13 +200,13 @@ export const PriceList = () => {
   }, [selectedCustomer]);
 
   useEffect(() => {
-    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis' || selectedCustomer === 'Kone') {
       localStorage.setItem(`${selectedCustomer.toLowerCase()}_dynamic_columns`, JSON.stringify(dynamicColumns));
     }
   }, [dynamicColumns, selectedCustomer]);
 
   useEffect(() => {
-    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
+    if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis' || selectedCustomer === 'Kone') {
       localStorage.setItem(`${selectedCustomer.toLowerCase()}_dynamic_values`, JSON.stringify(dynamicValues));
     }
   }, [dynamicValues, selectedCustomer]);
@@ -393,8 +395,12 @@ export const PriceList = () => {
       setError(null);
       try {
         await new Promise(resolve => setTimeout(resolve, 800));
-        if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis') {
-          const mainData = selectedCustomer === 'Mitsubishi' ? mitsubishiMainData : otisMainData.rows;
+        if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis' || selectedCustomer === 'Kone') {
+          const mainData = selectedCustomer === 'Mitsubishi'
+            ? mitsubishiMainData
+            : selectedCustomer === 'Otis'
+              ? otisMainData.rows
+              : koneMainData;
           setData(mainData);
           const customerVersion = {
             id: `${selectedCustomer.toLowerCase()}-v1`,
@@ -508,7 +514,7 @@ export const PriceList = () => {
   }, [versions.length]);
 
   useEffect(() => {
-    if (selectedCustomer !== 'Mitsubishi' && selectedCustomer !== 'Otis') {
+    if (selectedCustomer !== 'Mitsubishi' && selectedCustomer !== 'Otis' && selectedCustomer !== 'Kone') {
       setViewType('rm');
     }
   }, [selectedCustomer]);
@@ -920,6 +926,18 @@ export const PriceList = () => {
             page={page}
             rowsPerPage={rowsPerPage}
             selectedVersion={selectedVersion}
+          />
+        ) : selectedCustomer === 'Kone' ? (
+          <KoneMainTable
+            data={data}
+            searchTerm={searchTerm}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            dynamicColumns={dynamicColumns}
+            dynamicValues={dynamicValues}
+            updateDynamicValue={updateDynamicValue}
+            handleAddColumnClick={handleAddColumnClick}
+            deleteColumn={deleteColumn}
           />
         ) : (
           <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
