@@ -1,0 +1,21 @@
+{
+  "productName": "Wittur Augusta",
+  "halfYear": "H1 2026",
+  "rows": [
+    { "id": "c2-800-2100",    "opening": "C2",     "bt": 800,  "ht": 2100,     "extra": null,       "basic": 12050, "adderPainted": 12050, "hamm2060": 19295, "hamm1010": 19295, "hamm4550": 19295, "ral0808": 19295, "ss441": 5266, "ss304h": 5781,  "ss304m": 9343,  "remark": "" },
+    { "id": "c2-900-2100",    "opening": "C2",     "bt": 900,  "ht": 2100,     "extra": null,       "basic": 13213, "adderPainted": 13213, "hamm2060": 19949, "hamm1010": 19949, "hamm4550": 19949, "ral0808": 19949, "ss441": 5759, "ss304h": 6276,  "ss304m": 10076, "remark": "" },
+    { "id": "c2-1000-2100",   "opening": "C2",     "bt": 1000, "ht": 2100,     "extra": null,       "basic": 14013, "adderPainted": 14013, "hamm2060": 21854, "hamm1010": 21854, "hamm4550": 21854, "ral0808": 21854, "ss441": 6263, "ss304h": 6813,  "ss304m": 11325, "remark": "" },
+    { "id": "c2-1100-2100",   "opening": "C2",     "bt": 1100, "ht": 2100,     "extra": null,       "basic": 16878, "adderPainted": 16878, "hamm2060": 25289, "hamm1010": 25289, "hamm4550": 25289, "ral0808": 25289, "ss441": 6337, "ss304h": 6861,  "ss304m": 11611, "remark": "" },
+    { "id": "t2-800-2100",    "opening": "T2",     "bt": 800,  "ht": 2100,     "extra": null,       "basic": 12265, "adderPainted": 12265, "hamm2060": 21785, "hamm1010": 21785, "hamm4550": 21785, "ral0808": 21785, "ss441": 5479, "ss304h": 6487,  "ss304m": 10524, "remark": "" },
+    { "id": "t2-900-2100",    "opening": "T2",     "bt": 900,  "ht": 2100,     "extra": null,       "basic": 13301, "adderPainted": 13301, "hamm2060": 22491, "hamm1010": 22491, "hamm4550": 22491, "ral0808": 22491, "ss441": 5974, "ss304h": 6995,  "ss304m": 11270, "remark": "" },
+    { "id": "t2-1000-2100",   "opening": "T2",     "bt": 1000, "ht": 2100,     "extra": null,       "basic": 14774, "adderPainted": 14774, "hamm2060": 24668, "hamm1010": 24668, "hamm4550": 24668, "ral0808": 24668, "ss441": 6489, "ss304h": 7122,  "ss304m": 11872, "remark": "" },
+    { "id": "t2-1100-2100",   "opening": "T2",     "bt": 1100, "ht": 2100,     "extra": null,       "basic": 17535, "adderPainted": 17535, "hamm2060": 30222, "hamm1010": 30222, "hamm4550": 30222, "ral0808": 30222, "ss441": 6695, "ss304h": 7245,  "ss304m": 12470, "remark": "" },
+    { "id": "t2-extra100",    "opening": "T2",     "bt": null, "ht": null,     "extra": "+100 mm",  "basic": 1373,  "adderPainted": 1373,  "hamm2060": 2285,  "hamm1010": 2285,  "hamm4550": 2285,  "ral0808": 2285,  "ss441": 1481, "ss304h": 1350,  "ss304m": 1634,  "remark": "" },
+    { "id": "c2-extra100",    "opening": "C2",     "bt": null, "ht": null,     "extra": "+100 mm",  "basic": 1382,  "adderPainted": 1382,  "hamm2060": 2041,  "hamm1010": 2041,  "hamm4550": 2041,  "ral0808": 2041,  "ss441": 1489, "ss304h": 1462,  "ss304m": 1746,  "remark": "" },
+    { "id": "t2-120x60",      "opening": "T2",     "bt": null, "ht": null,     "extra": "120 x 60 frame", "basic": 1016,  "adderPainted": 1016,  "hamm2060": 1658,  "hamm1010": 1658,  "hamm4550": 1658,  "ral0808": 1658,  "ss441": 1432, "ss304h": 1559,  "ss304m": 1733,  "remark": "" },
+    { "id": "c2-120x60",      "opening": "C2",     "bt": null, "ht": null,     "extra": "120 x 60 frame", "basic": 987,   "adderPainted": 987,   "hamm2060": 1579,  "hamm1010": 1579,  "hamm4550": 1579,  "ral0808": 1579,  "ss441": 1555, "ss304h": 1572,  "ss304m": 1856,  "remark": "" },
+    { "id": "c2t2-ldu",       "opening": "C2/T2",  "bt": null, "ht": null,     "extra": "LDU Frame","basic": 18459, "adderPainted": 19822, "hamm2060": 19822,  "hamm1010": 19822, "hamm4550": 19822, "ral0808": 19822, "ss441": 24302,"ss304h": 26346, "ss304m": 53104, "remark": "" },
+    { "id": "t2-2100mm",      "opening": "T2",     "bt": null, "ht": 2100,     "extra": "2100mm",   "basic": 22022, "adderPainted": 23385, "hamm2060": 23385,  "hamm1010": 23385, "hamm4550": 23385, "ral0808": 29141, "ss441": 29141,"ss304h": 30657, "ss304m": 59674, "remark": "" },
+    { "id": "ldu-extra100",   "opening": "LDU Frame","bt": null,"ht": null,    "extra": "+100 mm",  "basic": 1222,  "adderPainted": 1222,  "hamm2060": 1222,   "hamm1010": 1222,  "hamm4550": 1222,  "ral0808": 1222,  "ss441": 1777, "ss304h": 2314,  "ss304m": 3684,  "remark": "" }
+  ]
+}

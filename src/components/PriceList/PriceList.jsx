@@ -57,9 +57,11 @@ import EItemPriceList from './common/EItemPriceList';
 import AddColumnDialog from './common/AddColumnDialog';
 import OtisMainTable from './otis/OtisMainTable';
 import KoneMainTable from './kone/KoneMainTable';
+import SchindlerMainTable from './schindler/SchindlerMainTable';
 import mitsubishiMainData from '../../data/mitsubishiMainData.json';
 import otisMainData from '../../data/otisMainData.json';
 import koneMainData from '../../data/koneMainData.json';
+import schindlerMainData from '../../data/schindlerMainData.json';
 import HierarchicalSelect from './common/HierarchicalSelect';
 
 const INDEPENDENT_TREE_OPTIONS = [
@@ -196,6 +198,11 @@ export const PriceList = () => {
     } else {
       setDynamicColumns([]);
       setDynamicValues({});
+    }
+
+    if (selectedCustomer === 'Schindler') {
+      setPosVarianceThreshold('0');
+      setNegVarianceThreshold('0');
     }
   }, [selectedCustomer]);
 
@@ -395,12 +402,14 @@ export const PriceList = () => {
       setError(null);
       try {
         await new Promise(resolve => setTimeout(resolve, 800));
-        if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis' || selectedCustomer === 'Kone') {
+        if (selectedCustomer === 'Mitsubishi' || selectedCustomer === 'Otis' || selectedCustomer === 'Kone' || selectedCustomer === 'Schindler') {
           const mainData = selectedCustomer === 'Mitsubishi'
             ? mitsubishiMainData
             : selectedCustomer === 'Otis'
               ? otisMainData.rows
-              : koneMainData;
+              : selectedCustomer === 'Schindler'
+                ? schindlerMainData.rows
+                : koneMainData;
           setData(mainData);
           const customerVersion = {
             id: `${selectedCustomer.toLowerCase()}-v1`,
@@ -938,6 +947,13 @@ export const PriceList = () => {
             updateDynamicValue={updateDynamicValue}
             handleAddColumnClick={handleAddColumnClick}
             deleteColumn={deleteColumn}
+          />
+        ) : selectedCustomer === 'Schindler' ? (
+          <SchindlerMainTable
+            data={schindlerMainData}
+            searchTerm={searchTerm}
+            page={page}
+            rowsPerPage={rowsPerPage}
           />
         ) : (
           <TableContainer sx={{ maxHeight: 600, overflow: 'auto' }}>
